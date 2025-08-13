@@ -1,0 +1,16 @@
+/* Main CSS Entry Point */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Import design system files */
+@import './styles/variables.css';
+@import './styles/base.css';
+@import './styles/components.css';
+@import './styles/landing.css';
+@import './styles/auth.css';
+@import './styles/dashboard.css';
+
+/* Additional page-specific styles can be imported here */
+
+/* Keep only legacy styles that are still needed */ 

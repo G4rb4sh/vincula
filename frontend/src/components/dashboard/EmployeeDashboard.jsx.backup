@@ -1,0 +1,363 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCallStore } from '../../stores/callStore';
+import { useAuthStore } from '../../stores/authStore';
+import { useQueueUpdates, useNotifications } from '../../hooks/useWebSocket';
+
+export const EmployeeDashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { 
+    queueEntries, 
+    activeCalls, 
+    queueLoading, 
+    queueError,
+    loadQueue, 
+    loadActiveCalls, 
+    assignNextCall, 
+    assignSpecificCall,
+    getStats 
+  } = useCallStore();
+
+  // WebSocket hooks para actualizaciones en tiempo real
+  const { queueData, activeCallsData, isConnected } = useQueueUpdates();
+  const { notifications } = useNotifications();
+
+  // Estado local
+  const [selectedPriority, setSelectedPriority] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadQueue();
+    loadActiveCalls();
+  }, [loadQueue, loadActiveCalls]);
+
+  // Actualizar datos cuando llegan por WebSocket
+  useEffect(() => {
+    if (queueData.length > 0) {
+      // Los datos ya se actualizan automáticamente en el store
+    }
+  }, [queueData]);
+
+  useEffect(() => {
+    if (activeCallsData.length >= 0) {
+      // Los datos ya se actualizan automáticamente en el store
+    }
+  }, [activeCallsData]);
+
+  // Manejar asignación de siguiente llamada
+  const handleNextCall = async () => {
+    setRefreshing(true);
+    try {
+      const result = await assignNextCall();
+      if (result.success) {
+        navigate(`/call/${result.callId}`);
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error starting next call:', error);
+      alert('Error al asignar la siguiente llamada');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Manejar asignación de llamada específica
+  const handleSpecificCall = async (entryId) => {
+    try {
+      const result = await assignSpecificCall(entryId);
+      if (result.success) {
+        navigate(`/call/${result.callId}`);
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error starting specific call:', error);
+      alert('Error al asignar la llamada');
+    }
+  };
+
+  // Refrescar datos manualmente
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([loadQueue(), loadActiveCalls()]);
+    setRefreshing(false);
+  };
+
+  // Filtrar cola por prioridad
+  const filteredQueue = selectedPriority === 'all' 
+    ? queueEntries 
+    : queueEntries.filter(entry => entry.priority === parseInt(selectedPriority));
+
+  // Obtener estadísticas
+  const stats = getStats();
+
+  return (
+    <div className="employee-dashboard">
+      <header className="dashboard-header">
+        <div className="header-content">
+          <div className="header-info">
+            <h1>Panel de Empleado</h1>
+            <p>Bienvenido, {user?.first_name} {user?.last_name}</p>
+          </div>
+          
+          <div className="header-stats">
+            <div className="stat-card">
+              <span className="stat-number">{stats.queueLength}</span>
+              <span className="stat-label">En Cola</span>
+            </div>
+            <div className="stat-card urgent">
+              <span className="stat-number">{stats.urgentCalls}</span>
+              <span className="stat-label">Urgentes</span>
+            </div>
+            <div className="stat-card active">
+              <span className="stat-number">{stats.activeCallsCount}</span>
+              <span className="stat-label">Activas</span>
+            </div>
+          </div>
+
+          <div className="header-actions">
+            <div className="connection-status">
+              <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
+                {isConnected ? 'Conectado' : 'Desconectado'}
+              </span>
+            </div>
+            <button 
+              onClick={handleRefresh} 
+              className="refresh-btn"
+              disabled={refreshing}
+            >
+              {refreshing ? 'Actualizando...' : 'Actualizar'}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Notificaciones */}
+      {notifications.length > 0 && (
+        <div className="notifications-panel">
+          {notifications.slice(0, 3).map(notification => (
+            <div key={notification.id} className={`notification ${notification.type}`}>
+              <p>{notification.message}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="dashboard-content">
+        {/* Sección de Cola */}
+        <div className="queue-section">
+          <div className="section-header">
+            <h2>Cola de Pacientes</h2>
+            
+            <div className="section-controls">
+              <select 
+                value={selectedPriority} 
+                onChange={(e) => setSelectedPriority(e.target.value)}
+                className="priority-filter"
+              >
+                <option value="all">Todas las prioridades</option>
+                <option value="1">Urgente</option>
+                <option value="2">Normal</option>
+                <option value="3">Rutina</option>
+              </select>
+
+              <button
+                onClick={handleNextCall}
+                className="next-call-btn"
+                disabled={queueEntries.length === 0 || refreshing}
+              >
+                Atender Siguiente
+              </button>
+            </div>
+          </div>
+
+          {queueError && (
+            <div className="error-message">
+              <p>Error al cargar la cola: {queueError}</p>
+              <button onClick={handleRefresh}>Reintentar</button>
+            </div>
+          )}
+
+          <div className="queue-list">
+            {queueLoading ? (
+              <div className="loading-state">
+                <div className="spinner"></div>
+                <p>Cargando cola...</p>
+              </div>
+            ) : filteredQueue.length > 0 ? (
+              filteredQueue.map((entry) => (
+                <QueueEntryCard 
+                  key={entry.id} 
+                  entry={entry} 
+                  onCallNow={() => handleSpecificCall(entry.id)}
+                />
+              ))
+            ) : (
+              <div className="empty-queue">
+                <p>
+                  {selectedPriority === 'all' 
+                    ? 'No hay pacientes en cola' 
+                    : `No hay pacientes con prioridad ${getPriorityLabel(parseInt(selectedPriority))}`
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sección de Llamadas Activas */}
+        <div className="active-calls-section">
+          <h2>Llamadas Activas ({activeCalls.length})</h2>
+          <ActiveCallsList calls={activeCalls} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componente de tarjeta de entrada en cola
+const QueueEntryCard = ({ entry, onCallNow }) => {
+  const getPriorityLabel = (priority) => {
+    switch (priority) {
+      case 1: return 'Urgente';
+      case 2: return 'Normal';
+      case 3: return 'Rutina';
+      default: return 'Normal';
+    }
+  };
+
+  const getPriorityClass = (priority) => {
+    switch (priority) {
+      case 1: return 'priority-urgent';
+      case 2: return 'priority-normal';
+      case 3: return 'priority-routine';
+      default: return 'priority-normal';
+    }
+  };
+
+  const formatWaitTime = (waitingSince) => {
+    const minutes = Math.floor((Date.now() - new Date(waitingSince).getTime()) / 60000);
+    if (minutes < 60) {
+      return `${minutes} min`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}h ${remainingMinutes}m`;
+    }
+  };
+
+  return (
+    <div className={`queue-entry-card ${getPriorityClass(entry.priority)}`}>
+      <div className="entry-header">
+        <div className="patient-info">
+          <h3>{entry.patient?.first_name} {entry.patient?.last_name}</h3>
+          <p className="patient-id">ID: {entry.patient?.id}</p>
+          <p className="patient-email">Email: {entry.patient?.email}</p>
+        </div>
+
+        <div className="priority-badge">
+          <span className={`priority-label ${getPriorityClass(entry.priority)}`}>
+            {getPriorityLabel(entry.priority)}
+          </span>
+        </div>
+      </div>
+
+      <div className="entry-details">
+        <div className="wait-info">
+          <div className="wait-stat">
+            <span className="wait-label">Creado:</span>
+            <span className="wait-value">{formatWaitTime(entry.created_at)}</span>
+          </div>
+          <div className="wait-stat">
+            <span className="wait-label">Estado:</span>
+            <span className="wait-value">{entry.status}</span>
+          </div>
+          <div className="wait-stat">
+            <span className="wait-label">Prioridad:</span>
+            <span className="wait-value">{entry.priority}</span>
+          </div>
+        </div>
+
+        {entry.reason && (
+          <div className="reason">
+            <p><strong>Motivo:</strong> {entry.reason}</p>
+          </div>
+        )}
+
+        {entry.notes && (
+          <div className="notes">
+            <p><strong>Notas:</strong> {entry.notes}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="entry-actions">
+        <button
+          className="call-now-btn"
+          onClick={onCallNow}
+        >
+          Llamar Ahora
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Componente de lista de llamadas activas
+const ActiveCallsList = ({ calls }) => {
+  const navigate = useNavigate();
+
+  const formatDuration = (startedAt) => {
+    const duration = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleJoinCall = (callId) => {
+    navigate(`/call/${callId}`);
+  };
+
+  if (calls.length === 0) {
+    return (
+      <div className="no-active-calls">
+        <p>No hay llamadas activas en este momento</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="active-calls-list">
+      {calls.map((call) => (
+        <div key={call.id} className="active-call-card">
+          <div className="call-info">
+            <h4>{call.patient?.first_name} {call.patient?.last_name}</h4>
+            <p>Empleado: {call.employee?.first_name} {call.employee?.last_name}</p>
+            <p>Duración: {formatDuration(call.started_at)}</p>
+          </div>
+          <div className="call-actions">
+            <button 
+              onClick={() => handleJoinCall(call.id)}
+              className="join-call-btn"
+            >
+              Unirse
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Función auxiliar para obtener etiqueta de prioridad
+const getPriorityLabel = (priority) => {
+  switch (priority) {
+    case 1: return 'Urgente';
+    case 2: return 'Normal';
+    case 3: return 'Rutina';
+    default: return 'Normal';
+  }
+};

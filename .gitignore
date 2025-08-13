@@ -1,0 +1,16 @@
+.env
+node_modules/
+*.log
+.DS_Store
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Go binaries
+backend/*/main
+backend/*/*-service
+user-service
+call-service
+queue-service
+api-gateway

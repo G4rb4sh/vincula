@@ -401,6 +401,14 @@ function VideoCall() {
     );
   }
 
+  // Calcular distribución de grid tipo Meet según cantidad de tiles
+  const totalTiles = participants.length + (user.role !== 'family' ? 1 : 0);
+  let gridCols = '1fr';
+  if (totalTiles === 2) gridCols = 'repeat(2, 1fr)';
+  else if (totalTiles === 3 || totalTiles === 4) gridCols = 'repeat(2, 1fr)';
+  else if (totalTiles >= 5 && totalTiles <= 9) gridCols = 'repeat(3, 1fr)';
+  else if (totalTiles >= 10) gridCols = 'repeat(4, 1fr)';
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#0b0f14' }}>
       <AppBar position="static" color="default" sx={{ bgcolor: '#111827', color: '#e5e7eb', boxShadow: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -422,7 +430,7 @@ function VideoCall() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth={false} sx={{ flex: 1, py: 2 }}>
+      <Container maxWidth={false} disableGutters sx={{ flex: 1, py: 2 }}>
         <Box sx={{ position: 'relative', height: '100%' }}>
           {isConnected && !audioUnlocked && (
             <Box sx={{ position: 'absolute', zIndex: 20, top: 16, left: '50%', transform: 'translateX(-50%)' }}>
@@ -430,11 +438,28 @@ function VideoCall() {
             </Box>
           )}
 
-          <Grid container spacing={2} sx={{ height: '100%', m: 0 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              height: '100%',
+              gridTemplateColumns: gridCols,
+              placeContent: 'center start',
+              justifyItems: 'center',
+              alignItems: 'start',
+              overflow: 'auto',
+            }}
+          >
             {/* Remotos */}
             {participants.map((participant) => (
-              <Grid key={participant.identity} item xs={12} sm={6} md={participants.length > 1 ? 4 : 6} lg={participants.length > 2 ? 3 : 6} sx={{ display: 'flex' }}>
-                <Paper elevation={0} sx={{ position: 'relative', flex: 1, bgcolor: '#111827', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Paper key={participant.identity} elevation={0} sx={{ bgcolor: '#111827', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', position: 'relative', width: '100%' }}>
+                <Box sx={{
+                  position: 'relative',
+                  width: 'min(100%, calc(80vh * 16 / 9))',
+                  aspectRatio: '16 / 9',
+                  maxHeight: '80vh',
+                  mx: 'auto',
+                }}>
                   <video
                     ref={(el) => {
                       if (el) {
@@ -452,41 +477,45 @@ function VideoCall() {
                     autoPlay
                     muted={!audioUnlocked}
                     playsInline
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#0b0f14' }}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#0b0f14' }}
                   />
-                  <Box sx={{ position: 'absolute', bottom: 8, left: 8, bgcolor: 'rgba(0,0,0,0.5)', px: 1.25, py: 0.5, borderRadius: 1.5 }}>
-                    <Typography variant="body2" sx={{ color: '#e5e7eb' }}>{participant.name || participant.identity}</Typography>
-                  </Box>
-                </Paper>
-              </Grid>
+                </Box>
+                <Box sx={{ position: 'absolute', bottom: 8, left: 8, bgcolor: 'rgba(0,0,0,0.5)', px: 1.25, py: 0.5, borderRadius: 1.5 }}>
+                  <Typography variant="body2" sx={{ color: '#e5e7eb' }}>{participant.name || participant.identity}</Typography>
+                </Box>
+              </Paper>
             ))}
 
             {/* Local */}
             {user.role !== 'family' && (
-              <Grid item xs={12} sm={6} md={participants.length > 1 ? 4 : 6} lg={participants.length > 2 ? 3 : 6} sx={{ display: 'flex' }}>
-                <Paper elevation={0} sx={{ position: 'relative', flex: 1, bgcolor: '#111827', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Paper elevation={0} sx={{ bgcolor: '#111827', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', position: 'relative', width: '100%' }}>
+                <Box sx={{
+                  position: 'relative',
+                  width: 'min(100%, calc(80vh * 16 / 9))',
+                  aspectRatio: '16 / 9',
+                  maxHeight: '80vh',
+                  mx: 'auto',
+                }}>
                   <video
                     ref={localVideoRef}
                     autoPlay
                     muted
                     playsInline
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#0b0f14' }}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#0b0f14' }}
                   />
-                  <Box sx={{ position: 'absolute', bottom: 8, left: 8, bgcolor: 'rgba(0,0,0,0.5)', px: 1.25, py: 0.5, borderRadius: 1.5 }}>
-                    <Typography variant="body2" sx={{ color: '#e5e7eb' }}>Tú</Typography>
-                  </Box>
-                </Paper>
-              </Grid>
+                </Box>
+                <Box sx={{ position: 'absolute', bottom: 8, left: 8, bgcolor: 'rgba(0,0,0,0.5)', px: 1.25, py: 0.5, borderRadius: 1.5 }}>
+                  <Typography variant="body2" sx={{ color: '#e5e7eb' }}>Tú</Typography>
+                </Box>
+              </Paper>
             )}
 
             {participants.length === 0 && (
-              <Grid item xs={12}>
-                <Box sx={{ height: '100%', minHeight: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
-                  <Typography>Esperando a que se unan otros participantes...</Typography>
-                </Box>
-              </Grid>
+              <Box sx={{ gridColumn: '1 / -1', minHeight: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                <Typography>Esperando a que se unan otros participantes...</Typography>
+              </Box>
             )}
-          </Grid>
+          </Box>
         </Box>
       </Container>
 

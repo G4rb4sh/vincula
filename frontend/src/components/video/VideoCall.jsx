@@ -56,6 +56,7 @@ function VideoCall() {
   // Referencias para elementos de video y control de conexión
   const localVideoRef = useRef(null);
   const remoteVideoRefs = useRef({});
+  const remoteAudioRefs = useRef({});
   const roomRef = useRef(null);
   const isConnectingRef = useRef(false);
   const hasConnectedRef = useRef(false);
@@ -134,6 +135,8 @@ function VideoCall() {
         setIsLoading(false);
         hasConnectedRef.current = true;
         isConnectingRef.current = false;
+        // Sembrar participantes existentes al conectar (para ver a quien ya estaba)
+        updateParticipants(newRoom);
       });
 
       newRoom.on(RoomEvent.Reconnecting, () => {
@@ -165,6 +168,15 @@ function VideoCall() {
       newRoom.on(RoomEvent.ParticipantConnected, (participant) => {
         console.log('Participant connected:', participant.identity);
         updateParticipants(newRoom);
+        try {
+          // Forzar suscripción a publicaciones existentes por posibles race conditions
+          const pubs = Array.from(participant.videoTrackPublications?.values?.() || []);
+          pubs.forEach((pub) => {
+            if (typeof pub.setSubscribed === 'function') {
+              pub.setSubscribed(true).catch(() => {});
+            }
+          });
+        } catch (_) {}
       });
 
       newRoom.on(RoomEvent.ParticipantDisconnected, (participant) => {
@@ -184,6 +196,19 @@ function VideoCall() {
         detachTrackFromElement(track, participant);
       });
 
+      newRoom.on(RoomEvent.TrackPublished, (publication, participant) => {
+        // Asegurar suscripción inmediata al publicarse
+        try {
+          if (typeof publication.setSubscribed === 'function') {
+            publication.setSubscribed(true).catch(() => {});
+          }
+        } catch (_) {}
+      });
+
+      newRoom.on(RoomEvent.TrackSubscriptionFailed, (trackSid, participant) => {
+        console.warn('Track subscription failed for', trackSid, 'participant', participant?.identity);
+      });
+
       // Conectar a la sala (usar URL provista por backend si existe)
       const urlToUse = serverUrl || process.env.REACT_APP_LIVEKIT_URL || 'ws://localhost:7880';
       // No publicar audio/video durante la conexión para evitar bloqueo por autoplay
@@ -195,6 +220,8 @@ function VideoCall() {
       
       setRoom(newRoom);
       roomRef.current = newRoom;
+      // Asegurar que la lista de participantes se actualice inmediatamente tras conectar
+      updateParticipants(newRoom);
 
       // Capturar referencias a las pistas locales ya publicadas
       try {
@@ -228,6 +255,19 @@ function VideoCall() {
     setParticipants(remoteParticipants);
     try {
       console.log('Remote participants count:', remoteParticipants.length, remoteParticipants.map(p => ({ id: p.identity, sid: p.sid, name: p.name })));
+    } catch (_) {}
+    // Adjuntar inmediatamente tracks existentes a sus elementos si ya están montados
+    try {
+      remoteParticipants.forEach((p) => {
+        const el = remoteVideoRefs.current[p.identity];
+        if (!el) return;
+        const pubs = Array.from(p.videoTrackPublications?.values?.() || []);
+        const existingTrack = pubs.find((pub) => pub?.track)?.track;
+        if (existingTrack) {
+          existingTrack.attach(el);
+          el.play && el.play().catch(() => {});
+        }
+      });
     } catch (_) {}
   };
 
@@ -285,10 +325,19 @@ function VideoCall() {
       if (element) {
         track.attach(element);
         try {
-          // For autoplay policies, ensure element attempts to play
           element.play && element.play().catch(() => {});
         } catch (_) {}
       }
+    } else if (track.kind === Track.Kind.Audio) {
+      try {
+        const audioEl = track.attach();
+        audioEl.autoplay = true;
+        audioEl.playsInline = true;
+        audioEl.muted = !audioUnlocked;
+        remoteAudioRefs.current[participant.identity] = audioEl;
+        document.body.appendChild(audioEl);
+        audioEl.play && audioEl.play().catch(() => {});
+      } catch (_) {}
     }
   };
 
@@ -296,6 +345,17 @@ function VideoCall() {
   const detachTrackFromElement = (track, participant) => {
     if (track.kind === Track.Kind.Video) {
       track.detach();
+    } else if (track.kind === Track.Kind.Audio) {
+      try {
+        const el = remoteAudioRefs.current[participant.identity];
+        if (el) {
+          track.detach(el);
+          el.remove();
+          delete remoteAudioRefs.current[participant.identity];
+        } else {
+          track.detach();
+        }
+      } catch (_) {}
     }
   };
 

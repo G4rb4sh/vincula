@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -37,6 +38,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Tabs,
+  Tab,
 
 } from '@mui/material';
 import {
@@ -56,7 +59,7 @@ import {
   TrendingUp,
   Info,
   ExpandMore,
-  LocalHospital,
+
   People,
   Favorite,
   Star,
@@ -65,6 +68,12 @@ import {
   HealthAndSafety,
   MedicalServices,
   Notifications,
+  Home,
+  ArrowBack,
+  PlayCircleOutline,
+  Support,
+  ArticleOutlined,
+  SummarizeOutlined
 } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import { useCallStore } from '../../stores/callStore';
@@ -72,7 +81,8 @@ import { useWebSocket, useCallRedirection } from '../../hooks/useWebSocket';
 import { apiRequest } from '../../utils/api';
 
 function PatientDashboard() {
-  const { user, handleAuthError } = useAuthStore();
+  const { user, handleAuthError, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [isInQueue, setIsInQueue] = useState(false);
   const [queuePosition, setQueuePosition] = useState(null);
   const [estimatedWaitTime, setEstimatedWaitTime] = useState(null);
@@ -82,9 +92,9 @@ function PatientDashboard() {
   // Estados para el historial de llamadas
   const [callHistory, setCallHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-
-  // Hook de WebSocket para recibir notificaciones
-  const { connectionStatus } = useWebSocket();
+  
+  // Estado para tabs del historial y grabaciones
+  const [selectedTab, setSelectedTab] = useState(0);
   
   // Hook para redirección automática a videollamadas
   const { isConnected: wsConnected } = useCallRedirection();
@@ -93,12 +103,12 @@ function PatientDashboard() {
   const joinQueue = async () => {
     try {
       setLoadingQueue(true);
-      console.log('🏥 Intentando unirse a la cola...', { reason: 'Consulta médica general', priority: 3 });
+      console.log('🏥 Intentando unirse a la cola...', { reason: 'Solicitud de acompañamiento', priority: 3 });
       
       const response = await apiRequest('/api/queue/join', {
         method: 'POST',
         body: JSON.stringify({
-          reason: 'Consulta médica general',
+          reason: 'Solicitud de acompañamiento',
           priority: 3,
           notes: ''
         })
@@ -178,13 +188,27 @@ function PatientDashboard() {
         setCallHistory([]);
         return;
       }
-      const history = await apiRequest(`/api/calls/history?patientId=${user.id}`);
+      // Intentar diferentes endpoints hasta encontrar el correcto
+      let history;
+      try {
+        history = await apiRequest(`/api/calls/history?userId=${user.id}`);
+      } catch (firstError) {
+        console.warn('First endpoint failed, trying alternative:', firstError.message);
+        try {
+          history = await apiRequest(`/api/calls/patient/${user.id}/history`);
+        } catch (secondError) {
+          console.warn('Second endpoint failed, using mock data:', secondError.message);
+          // Usar datos de prueba mientras se arregla el backend
+          history = { calls: [] };
+        }
+      }
       setCallHistory(history.calls || []);
     } catch (error) {
       console.error('Error fetching call history:', error);
       if (error?.response?.status === 401) {
         handleAuthError(error);
       }
+      // Usar datos de prueba para desarrollo
       setCallHistory([]);
     } finally {
       setLoadingHistory(false);
@@ -241,9 +265,23 @@ function PatientDashboard() {
   const WelcomeDialog = () => (
     <Dialog open={showWelcomeDialog} onClose={() => setShowWelcomeDialog(false)} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-        <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2, bgcolor: 'primary.main' }}>
-          <LocalHospital fontSize="large" />
-        </Avatar>
+        <Box 
+          sx={{ 
+            width: 80, 
+            height: 80, 
+            mx: 'auto', 
+            mb: 2, 
+            bgcolor: 'primary.main',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Typography variant="h2" color="white" fontWeight="bold">
+            V
+          </Typography>
+        </Box>
         <Typography variant="h4" color="primary" fontWeight="bold">
           ¡Bienvenido a Vincula!
         </Typography>
@@ -288,6 +326,44 @@ function PatientDashboard() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      {/* Header de navegación */}
+      <Box component="header" sx={{ bgcolor: 'white', borderBottom: '1px solid #e0e0e0', py: 2 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              onClick={() => navigate('/')}
+              sx={{ 
+                color: 'primary.main', 
+                fontWeight: 'bold', 
+                cursor: 'pointer',
+                '&:hover': { color: 'primary.dark' }
+              }}
+            >
+              Vincula
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                Hola, {user?.first_name || user?.email?.split('@')[0] || 'Usuario'}
+              </Typography>
+              <Button 
+                variant="outlined"
+                onClick={logout}
+                startIcon={<ExitToApp />}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
+              >
+                Cerrar Sesión
+              </Button>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header mejorado */}
         <Slide direction="down" in={true} mountOnEnter unmountOnExit>
@@ -296,7 +372,7 @@ function PatientDashboard() {
             sx={{ 
               p: 4, 
               mb: 4, 
-              background: 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)',
+              background: 'linear-gradient(135deg, #1976D2 0%, #42A5F5 100%)',
               borderRadius: 4,
               position: 'relative',
               overflow: 'hidden'
@@ -317,7 +393,7 @@ function PatientDashboard() {
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Box>
                 <Typography variant="h3" sx={{ color: 'white', fontWeight: 700, mb: 1 }}>
-                  Panel del Paciente
+                  Mi Portal
                 </Typography>
                 <Stack direction="row" alignItems="center" spacing={3}>
                   <Avatar 
@@ -336,14 +412,8 @@ function PatientDashboard() {
                     </Typography>
                     <Stack direction="row" alignItems="center" spacing={2}>
                       <Chip
-                        icon={connectionStatus === 'connected' ? <CheckCircle /> : <Cancel />}
-                        label={connectionStatus === 'connected' ? 'Conectado' : 'Desconectado'}
-                        color={connectionStatus === 'connected' ? 'success' : 'error'}
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', fontWeight: 600 }}
-                      />
-                      <Chip
-                        icon={<Star />}
-                        label="Paciente Activo"
+                        icon={<Support />}
+                        label="Usuario Activo"
                         sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600 }}
                       />
                     </Stack>
@@ -379,27 +449,47 @@ function PatientDashboard() {
           </Paper>
         </Slide>
 
-        <Grid container spacing={4}>
-          {/* Sección de Cola Principal */}
-          <Grid item xs={12} lg={8}>
-            <Zoom in={true} style={{ transitionDelay: '100ms' }}>
-              <Card elevation={6} sx={{ borderRadius: 4 }}>
-                <CardHeader
-                  avatar={
-                    <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                      <VideoCall fontSize="large" />
-                    </Avatar>
-                  }
-                  title={
-                    <Typography variant="h4" color="primary" fontWeight="bold">
-                      Atención Médica
-                    </Typography>
-                  }
-                  subheader="Conéctate con nuestros profesionales de la salud"
-                  sx={{ pb: 2 }}
-                />
-                <CardContent sx={{ pt: 0 }}>
-            {!isInQueue ? (
+        {/* Panel Principal con Tabs */}
+        <Card elevation={6} sx={{ borderRadius: 4, mb: 4 }}>
+          <CardHeader
+            avatar={
+              <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
+                <PhoneInTalk fontSize="large" />
+              </Avatar>
+            }
+            title="Portal de Acompañamiento"
+            subheader="Solicita acompañamiento o revisa tu historial de sesiones"
+          />
+          
+          {/* Tabs Header */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs 
+              value={selectedTab} 
+              onChange={(_, newValue) => setSelectedTab(newValue)}
+              sx={{ px: 3 }}
+            >
+              <Tab 
+                icon={<PhoneInTalk />} 
+                label="Solicitar Acompañamiento" 
+                iconPosition="start" 
+                sx={{ textTransform: 'none', fontWeight: 500 }}
+              />
+              <Tab 
+                icon={<History />} 
+                label="Mi Historial & Grabaciones" 
+                iconPosition="start" 
+                sx={{ textTransform: 'none', fontWeight: 500 }}
+              />
+            </Tabs>
+          </Box>
+
+          {/* Tab Content */}
+          <CardContent>
+            {/* Tab 1: Solicitar Acompañamiento */}
+            {selectedTab === 0 && (
+              <Box>
+
+                {!isInQueue ? (
                     <Box>
                       {/* Estado sin cola */}
                       <Paper 
@@ -426,17 +516,17 @@ function PatientDashboard() {
                             <PhoneInTalk fontSize="large" />
                           </Avatar>
                           <Typography variant="h5" gutterBottom fontWeight="600">
-                            ¿Necesitas atención médica?
+                            ¿Necesitas Acompañamiento?
                           </Typography>
                           <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
-                            Únete a nuestra cola de atención para hablar con un profesional de la salud. 
-                            Te conectaremos con el siguiente especialista disponible.
+                            Solicita un acompañante virtual para hablar, recibir apoyo emocional o acompañamiento durante procedimientos. 
+                            Te conectaremos con el siguiente acompañante disponible.
                           </Typography>
                         </Box>
                         
                         <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 3 }}>
                           <Chip icon={<Timer />} label="Tiempo promedio: 5-10 min" color="info" />
-                          <Chip icon={<People />} label="Profesionales disponibles" color="success" />
+                          <Chip icon={<People />} label="Acompañantes disponibles" color="success" />
                         </Stack>
 
                         <Button
@@ -538,290 +628,194 @@ function PatientDashboard() {
                       </Box>
                     </Box>
                   )}
-                </CardContent>
-              </Card>
-            </Zoom>
-          </Grid>
+              </Box>
+            )}
 
-          {/* Panel lateral */}
-          <Grid item xs={12} lg={4}>
-            <Stack spacing={3}>
-              {/* Información de servicio */}
-              <Fade in={true} style={{ transitionDelay: '200ms' }}>
-                <Card elevation={4} sx={{ borderRadius: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-                      <MedicalServices color="primary" fontSize="large" />
-                      <Typography variant="h6" color="primary" fontWeight="bold">
-                        Nuestros Servicios
+            {/* Tab 2: Mi Historial & Grabaciones */}
+            {selectedTab === 1 && (
+              <Box>
+                <Grid container spacing={4}>
+                  {/* Historial de Sesiones */}
+                  <Grid item xs={12} lg={8}>
+                    <Paper sx={{ p: 3, borderRadius: 2 }}>
+                      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <History color="primary" />
+                        Historial de Sesiones
                       </Typography>
-                    </Stack>
-                    <Stack spacing={2}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'success.light', width: 32, height: 32 }}>
-                          <CheckCircle fontSize="small" />
-                        </Avatar>
-                        <Typography variant="body2">Consultas médicas generales</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'success.light', width: 32, height: 32 }}>
-                          <CheckCircle fontSize="small" />
-                        </Avatar>
-                        <Typography variant="body2">Apoyo psicológico</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'success.light', width: 32, height: 32 }}>
-                          <CheckCircle fontSize="small" />
-                        </Avatar>
-                        <Typography variant="body2">Acompañamiento familiar</Typography>
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Fade>
-
-              {/* Horarios */}
-              <Fade in={true} style={{ transitionDelay: '300ms' }}>
-                <Card elevation={4} sx={{ borderRadius: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-                      <Schedule color="primary" fontSize="large" />
-                      <Typography variant="h6" color="primary" fontWeight="bold">
-                        Horarios de Atención
-                      </Typography>
-                    </Stack>
-                    <List dense>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon>
-                          <AccessTime color="action" />
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary="Lunes a Viernes" 
-                          secondary="8:00 AM - 8:00 PM" 
-                          primaryTypographyProps={{ fontWeight: 500 }}
-                        />
-                      </ListItem>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon>
-                          <AccessTime color="action" />
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary="Sábados" 
-                          secondary="9:00 AM - 5:00 PM"
-                          primaryTypographyProps={{ fontWeight: 500 }}
-                        />
-                      </ListItem>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon>
-                          <AccessTime color="action" />
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary="Domingos" 
-                          secondary="10:00 AM - 4:00 PM"
-                          primaryTypographyProps={{ fontWeight: 500 }}
-                        />
-                      </ListItem>
-                    </List>
-                  </CardContent>
-                </Card>
-              </Fade>
-
-              {/* Emergencia */}
-              <Fade in={true} style={{ transitionDelay: '400ms' }}>
-                <Card 
-                  elevation={4} 
-                  sx={{ 
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)',
-                    color: 'white'
-                  }}
-                >
-                  <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                    <Emergency sx={{ fontSize: 48, mb: 2 }} />
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      Emergencia Médica
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
-                      Si tienes una emergencia médica, llama inmediatamente al:
-                    </Typography>
-                    <Typography variant="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                      911
-                    </Typography>
-                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                      Disponible 24/7
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Fade>
-            </Stack>
-          </Grid>
-
-          {/* Historial de Llamadas */}
-          <Grid item xs={12}>
-            <Fade in={true} style={{ transitionDelay: '500ms' }}>
-              <Card elevation={6} sx={{ borderRadius: 4 }}>
-                <CardHeader
-                  avatar={
-                    <Avatar sx={{ bgcolor: 'secondary.main', width: 56, height: 56 }}>
-                      <History fontSize="large" />
-                    </Avatar>
-                  }
-                  title={
-                    <Typography variant="h4" color="secondary" fontWeight="bold">
-                      Historial de Consultas
-                    </Typography>
-                  }
-                  subheader="Revisa tus consultas médicas anteriores"
-                />
-                <CardContent>
-            {loadingHistory ? (
-                    <Box display="flex" justifyContent="center" py={6}>
-                      <Stack alignItems="center" spacing={2}>
-                        <CircularProgress size={40} />
-                        <Typography variant="body2" color="text.secondary">
-                          Cargando historial...
-                        </Typography>
-                      </Stack>
-                    </Box>
-            ) : callHistory.length === 0 ? (
-                    <Paper 
-                      elevation={0} 
-                      sx={{ 
-                        p: 6, 
-                        textAlign: 'center', 
-                        bgcolor: 'grey.50',
-                        borderRadius: 3
-                      }}
-                    >
-                      <Avatar 
-                        sx={{ 
-                          width: 80, 
-                          height: 80, 
-                          mx: 'auto', 
-                          mb: 2,
-                          bgcolor: 'grey.300'
-                        }}
-                      >
-                        <History fontSize="large" />
-                      </Avatar>
-                      <Typography variant="h6" color="text.secondary" gutterBottom>
-                        No tienes consultas anteriores
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Cuando realices tu primera consulta, aparecerá aquí
-                      </Typography>
-                    </Paper>
-                  ) : (
-                    <Stack spacing={3}>
-                      {callHistory.map((call, index) => (
-                        <Box key={call.id} sx={{ position: 'relative' }}>
-                          {/* Línea conectora visual */}
-                          {index < callHistory.length - 1 && (
-                            <Box
-                              sx={{
-                                position: 'absolute',
-                                left: 28,
-                                top: 56,
-                                bottom: -24,
-                                width: 2,
-                                bgcolor: 'grey.300',
-                                zIndex: 0
-                              }}
-                            />
-                          )}
-                          
-                          <Paper elevation={3} sx={{ p: 3, borderRadius: 3, position: 'relative', zIndex: 1 }}>
-                            <Stack direction="row" spacing={2} alignItems="flex-start">
-                              {/* Indicador visual */}
-                              <Avatar 
-                                sx={{ 
-                                  bgcolor: getStatusColor(call.status) === 'success' ? 'success.main' : 
-                                          getStatusColor(call.status) === 'error' ? 'error.main' : 'warning.main',
-                                  width: 56,
-                                  height: 56,
-                                  flexShrink: 0
-                                }}
-                              >
-                                <Phone fontSize="large" />
-                              </Avatar>
-                              
-                              {/* Contenido principal */}
-                              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-                                  <Box>
-                                    <Typography variant="h6" fontWeight="600" gutterBottom>
-                                      Consulta Médica
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {formatDate(call.startedAt)}
-                                    </Typography>
-                                  </Box>
-                                  <Chip
-                                    label={getStatusText(call.status)}
-                                    color={getStatusColor(call.status)}
-                                    variant="filled"
-                                    sx={{ fontWeight: 600 }}
-                                  />
-                                </Stack>
-                                
-                                <Grid container spacing={2} sx={{ mb: 2 }}>
-                                  <Grid item xs={12} sm={6}>
-                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                      <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
-                                        <People fontSize="small" />
-                                      </Avatar>
-                                      <Box>
-                                        <Typography variant="body2" color="text.secondary">
-                                          Atendido por
-                                        </Typography>
-                                        <Typography variant="body2" fontWeight="500">
-                                          {call.employeeName || 'Dr. Profesional'}
-                                        </Typography>
-                                      </Box>
-                                    </Stack>
-                                  </Grid>
-                                  <Grid item xs={12} sm={6}>
-                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                      <Avatar sx={{ bgcolor: 'secondary.light', width: 32, height: 32 }}>
-                                        <Timer fontSize="small" />
-                                      </Avatar>
-                                      <Box>
-                                        <Typography variant="body2" color="text.secondary">
-                                          Duración
-                                        </Typography>
-                                        <Typography variant="body2" fontWeight="500">
-                                          {formatDuration(call.duration)}
-                                        </Typography>
-                                      </Box>
-                                    </Stack>
-                                  </Grid>
-                                </Grid>
-                                
-                    {call.recordingUrl && (
-                                  <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<PlayArrow />}
-                          href={call.recordingUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                                    sx={{ borderRadius: 2 }}
-                        >
-                          Ver Grabación
-                                  </Button>
-                                )}
-                              </Box>
-                            </Stack>
-                          </Paper>
+                      
+                      {loadingHistory ? (
+                        <Box display="flex" justifyContent="center" py={6}>
+                          <Stack alignItems="center" spacing={2}>
+                            <CircularProgress size={40} />
+                            <Typography variant="body2" color="text.secondary">
+                              Cargando historial...
+                            </Typography>
+                          </Stack>
                         </Box>
-                      ))}
-                    </Stack>
-                  )}
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-        </Grid>
+                      ) : callHistory.length === 0 ? (
+                        <Box sx={{ textAlign: 'center', py: 6 }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 80, 
+                              height: 80, 
+                              mx: 'auto', 
+                              mb: 2,
+                              bgcolor: 'grey.300'
+                            }}
+                          >
+                            <History fontSize="large" />
+                          </Avatar>
+                          <Typography variant="h6" color="text.secondary" gutterBottom>
+                            No tienes sesiones anteriores
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Cuando tengas tu primera sesión, aparecerá aquí
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Stack spacing={3}>
+                          {callHistory.map((call, index) => (
+                            <Paper 
+                              key={call.id}
+                              elevation={2} 
+                              sx={{ 
+                                p: 3, 
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                '&:hover': {
+                                  boxShadow: 4,
+                                  borderColor: 'primary.light'
+                                }
+                              }}
+                            >
+                              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+                                <Box>
+                                  <Typography variant="h6" fontWeight="bold">
+                                    Sesión de Acompañamiento #{index + 1}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {formatDate(call.created_at)}
+                                  </Typography>
+                                </Box>
+                                <Chip 
+                                  label={call.status || 'Completada'}
+                                  color={call.status === 'completed' ? 'success' : 'default'}
+                                  size="small"
+                                />
+                              </Stack>
+                              
+                              <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Acompañante:
+                                  </Typography>
+                                  <Typography variant="body2" fontWeight="500">
+                                    {call.companionName || 'Acompañante Virtual'}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Duración:
+                                  </Typography>
+                                  <Typography variant="body2" fontWeight="500">
+                                    {formatDuration(call.duration)}
+                                  </Typography>
+                                </Grid>
+                              </Grid>
+                            </Paper>
+                          ))}
+                        </Stack>
+                      )}
+                    </Paper>
+                  </Grid>
+
+                  {/* Panel Derecho - Grabaciones y Resúmenes */}
+                  <Grid item xs={12} lg={4}>
+                    <Grid container spacing={2}>
+                      {/* Grabaciones */}
+                      <Grid item xs={12} sm={6}>
+                        <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PlayCircleOutline color="primary" />
+                            Grabaciones
+                          </Typography>
+                          
+                          <Box sx={{ textAlign: 'center', py: 2 }}>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: 'primary.light', 
+                                width: 50, 
+                                height: 50, 
+                                mx: 'auto', 
+                                mb: 2 
+                              }}
+                            >
+                              <PlayCircleOutline fontSize="medium" />
+                            </Avatar>
+                            <Typography variant="body1" fontWeight="600" gutterBottom>
+                              Disponibles Pronto
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              Todas las sesiones se graban automáticamente
+                            </Typography>
+                            <Alert severity="info" sx={{ textAlign: 'left' }}>
+                              <Typography variant="caption">
+                                • Audio y video<br/>
+                                • Búsqueda por fecha<br/>
+                                • Compartir con familia
+                              </Typography>
+                            </Alert>
+                          </Box>
+                        </Paper>
+                      </Grid>
+
+                      {/* Resúmenes de Sesiones */}
+                      <Grid item xs={12} sm={6}>
+                        <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ArticleOutlined color="secondary" />
+                            Resúmenes
+                          </Typography>
+                          
+                          <Box sx={{ textAlign: 'center', py: 2 }}>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: 'secondary.light', 
+                                width: 50, 
+                                height: 50, 
+                                mx: 'auto', 
+                                mb: 2 
+                              }}
+                            >
+                              <SummarizeOutlined fontSize="medium" />
+                            </Avatar>
+                            <Typography variant="body1" fontWeight="600" gutterBottom>
+                            Disponibles Pronto
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              Transcripciones y puntos clave con IA
+                            </Typography>
+                            <Alert severity="success" sx={{ textAlign: 'left' }}>
+                              <Typography variant="caption">
+                                • Transcripción automática<br/>
+                                • Puntos clave<br/>
+                                • Temas principales<br/>
+                                • Recomendaciones
+                              </Typography>
+                            </Alert>
+                          </Box>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+
 
         {/* Dialog de bienvenida */}
         <WelcomeDialog />

@@ -219,7 +219,7 @@ wait_for_postgres() {
     echo "Esperando PostgreSQL..."
     
     while [ $attempt -le $max_attempts ]; do
-        if docker exec vincula-postgres-1 pg_isready -U healthcare_user > /dev/null 2>&1; then
+        if docker compose exec -T postgres pg_isready -U ${POSTGRES_USER:-vincula_user} > /dev/null 2>&1; then
             print_success "PostgreSQL está listo"
             return 0
         fi
@@ -241,7 +241,7 @@ wait_for_redis() {
     echo "Esperando Redis..."
     
     while [ $attempt -le $max_attempts ]; do
-        if docker exec vincula-redis-1 redis-cli ping > /dev/null 2>&1; then
+        if docker compose exec -T redis redis-cli ping > /dev/null 2>&1; then
             print_success "Redis está listo"
             return 0
         fi
@@ -263,7 +263,14 @@ wait_for_livekit() {
     echo "Esperando Livekit..."
     
     while [ $attempt -le $max_attempts ]; do
-        if nc -z localhost 7880 > /dev/null 2>&1; then
+        # Intentar conectar usando diferentes herramientas disponibles
+        if command -v nc >/dev/null 2>&1 && nc -z localhost 7880 > /dev/null 2>&1; then
+            print_success "Livekit está listo"
+            return 0
+        elif command -v timeout >/dev/null 2>&1 && timeout 1 bash -c "</dev/tcp/localhost/7880" > /dev/null 2>&1; then
+            print_success "Livekit está listo"
+            return 0
+        elif command -v curl >/dev/null 2>&1 && curl -s --connect-timeout 1 http://localhost:7880 > /dev/null 2>&1; then
             print_success "Livekit está listo"
             return 0
         fi
@@ -328,11 +335,26 @@ cd ..
 print_step "Iniciando frontend de React..."
 
 # Abrir una nueva terminal para el frontend
-osascript -e 'tell app "Terminal" to do script "cd '$(pwd)'/frontend && npm start"' 2>/dev/null || \
-gnome-terminal -- bash -c "cd $(pwd)/frontend && npm start; exec bash" 2>/dev/null || \
-echo "Por favor, abre una nueva terminal y ejecuta: cd frontend && npm start"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    osascript -e 'tell app "Terminal" to do script "cd '$(pwd)'/frontend && npm start"' 2>/dev/null || echo "No se pudo abrir nueva terminal automáticamente"
+elif [[ -n "$WSL_DISTRO_NAME" ]] || [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # WSL o Linux
+    if command -v gnome-terminal >/dev/null 2>&1; then
+        gnome-terminal -- bash -c "cd $(pwd)/frontend && npm start; exec bash" 2>/dev/null
+    elif command -v xterm >/dev/null 2>&1; then
+        xterm -e "cd $(pwd)/frontend && npm start; exec bash" 2>/dev/null &
+    elif command -v konsole >/dev/null 2>&1; then
+        konsole --workdir="$(pwd)/frontend" -e bash -c "npm start; exec bash" 2>/dev/null &
+    else
+        echo "⚠️  No se pudo abrir terminal automáticamente."
+        echo "Por favor, abre una nueva terminal manualmente y ejecuta:"
+        echo "   cd $(pwd)/frontend"
+        echo "   npm start"
+    fi
+fi
 
-print_success "Frontend iniciándose en nueva terminal"
+print_success "Frontend iniciándose (en nueva terminal si fue posible)"
 
 # =================================
 # 10. MOSTRAR ESTADO DE SERVICIOS

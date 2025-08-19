@@ -1,0 +1,28 @@
+services:
+  livekit:
+    environment:
+      - "LIVEKIT_KEYS=devkey: vincula_livekit_secret_key_2024_development_secure"
+      - LIVEKIT_REDIS=redis://redis:6379
+      - LIVEKIT_RTC_NODE_IP=127.0.0.1
+      - LIVEKIT_RTC_USE_EXTERNAL_IP=false
+      - LIVEKIT_RTC_UDP_PORT=7882
+      - LIVEKIT_RTC_PORT_RANGE_START=7882
+      - LIVEKIT_RTC_PORT_RANGE_END=7882
+      - LIVEKIT_RTC_TCP_PORT=7881
+      - LIVEKIT_LOG_LEVEL=info
+
+  user-service:
+    environment:
+      - LIVEKIT_URL=ws://localhost:7880
+      - LIVEKIT_INTERNAL_URL=ws://livekit:7880
+
+  frontend:
+    environment:
+      # Usar rutas relativas para que funcione tanto en localhost como en IP de red
+      - REACT_APP_API_URL=
+      - REACT_APP_WS_URL=
+      - REACT_APP_LIVEKIT_URL=
+    ports:
+      # Mapear también a localhost para acceso local con permisos de cámara/micrófono
+      - "3000:3000"
+      - "127.0.0.1:3000:3000"

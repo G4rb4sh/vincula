@@ -271,10 +271,47 @@ function VideoCall() {
     } catch (_) {}
   };
 
+  // Verificar compatibilidad de getUserMedia
+  const checkMediaCompatibility = () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('getUserMedia not supported');
+      return false;
+    }
+    
+    // Verificar si estamos en un contexto seguro
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      console.warn('Media access may require HTTPS');
+    }
+    
+    return true;
+  };
+
   // Publicar pistas locales
   const publishLocalTracks = async (room) => {
     try {
-      // Obtener pistas de cámara y micrófono
+      // Verificar compatibilidad primero
+      if (!checkMediaCompatibility()) {
+        throw new Error('Las funciones de cámara y micrófono requieren un navegador compatible y conexión segura (HTTPS)');
+      }
+
+      console.log('Requesting camera and microphone access...');
+      
+      // Intentar obtener permisos primero
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+        
+        // Cerrar el stream de prueba
+        stream.getTracks().forEach(track => track.stop());
+        console.log('Media permissions granted');
+      } catch (permissionError) {
+        console.error('Permission error:', permissionError);
+        throw new Error('Se requiere acceso a la cámara y micrófono. Por favor concede los permisos cuando te lo solicite el navegador.');
+      }
+
+      // Ahora habilitar en LiveKit
       await room.localParticipant.enableCameraAndMicrophone();
       
       // Obtener referencias a las pistas
@@ -291,9 +328,12 @@ function VideoCall() {
         videoTrack.attach(localVideoRef.current);
       }
 
+      console.log('Local tracks published successfully');
+
     } catch (error) {
       console.error('Error publishing local tracks:', error);
-      setError('Error al acceder a la cámara o micrófono');
+      const message = error.message || 'Error al acceder a la cámara o micrófono. Asegúrate de conceder permisos y usar HTTPS.';
+      setError(message);
     }
   };
 

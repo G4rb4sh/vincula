@@ -15,9 +15,16 @@ func main() {
 	// Configurar Gin
 	r := gin.Default()
 
-	// Configurar CORS (permisivo para desarrollo)
+	// Configurar CORS (incluye dominios de desarrollo y producción)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://192.168.1.15:3000", "http://127.0.0.1:3000"},
+		AllowOrigins: []string{
+			"http://localhost:3000", 
+			"http://192.168.1.15:3000", 
+			"http://127.0.0.1:3000", 
+			"http://26.92.110.41:3000",
+			"https://grupovincula.com",
+			"http://grupovincula.com",
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
@@ -44,7 +51,11 @@ func main() {
 	}
 
 	// Configurar proxies para microservicios
-	userServiceURL, _ := url.Parse("http://user-service:8080")
+	userServiceHost := os.Getenv("USER_SERVICE_URL")
+	if userServiceHost == "" {
+		userServiceHost = "http://user-service:8080"
+	}
+	userServiceURL, _ := url.Parse(userServiceHost)
 
 	userProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
 

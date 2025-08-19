@@ -1,3 +1,4 @@
+# Docker Compose para producción
 services:
   postgres:
     image: postgres:15-alpine
@@ -15,6 +16,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -23,6 +25,7 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    restart: unless-stopped
 
   livekit:
     image: livekit/livekit-server:latest
@@ -31,22 +34,19 @@ services:
       - "7881:7881"
       - "7882:7882/udp"
     environment:
-      - "LIVEKIT_KEYS=devkey: vincula_livekit_secret_key_2024_development_secure"
+      - "LIVEKIT_KEYS=devkey: ${LIVEKIT_SECRET_KEY:-vincula_livekit_secret_key_2024_production_secure}"
       - LIVEKIT_REDIS=redis://redis:6379
-      # Use 127.0.0.1 for valid NAT 1:1 mapping in local development
-      - LIVEKIT_RTC_NODE_IP=127.0.0.1
-      # Explicitly disable external IP discovery/NAT mapping for local dev
-      - LIVEKIT_RTC_USE_EXTERNAL_IP=false
-      # Use single-port UDP mux for media
+      # Usar la IP externa del VPS para producción
+      - LIVEKIT_RTC_NODE_IP=72.60.48.118
+      - LIVEKIT_RTC_USE_EXTERNAL_IP=true
       - LIVEKIT_RTC_UDP_PORT=7882
-      # Constrain ICE port range to the UDP mux port
       - LIVEKIT_RTC_PORT_RANGE_START=7882
       - LIVEKIT_RTC_PORT_RANGE_END=7882
-      # Enable ICE/TCP fallback on 7881
       - LIVEKIT_RTC_TCP_PORT=7881
-      # Optional: add a public STUN server and increase logging for debugging
-      - LIVEKIT_RTC_STUN_SERVERS=stun:stun.l.google.com:19302
-      - LIVEKIT_LOG_LEVEL=info
+      # STUN servers para WebRTC en producción
+      - LIVEKIT_RTC_STUN_SERVERS=stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302
+      - LIVEKIT_LOG_LEVEL=warn
+    restart: unless-stopped
 
   api-gateway:
     build: ./backend/api-gateway
@@ -62,9 +62,10 @@ services:
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET}
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
-      - LIVEKIT_SECRET_KEY=${LIVEKIT_SECRET_KEY:-vincula_livekit_secret_key_2024_development_secure}
+      - LIVEKIT_SECRET_KEY=${LIVEKIT_SECRET_KEY:-vincula_livekit_secret_key_2024_production_secure}
       - LIVEKIT_SERVER_URL=ws://livekit:7880
       - USER_SERVICE_URL=http://user-service:8080
+    restart: unless-stopped
 
   user-service:
     build: ./backend/user-service
@@ -76,10 +77,12 @@ services:
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-vincula_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vincula}
       - JWT_SECRET=${JWT_SECRET}
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=vincula_livekit_secret_key_2024_development_secure
-      - LIVEKIT_URL=ws://localhost:7880
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
+      - LIVEKIT_API_SECRET=${LIVEKIT_SECRET_KEY:-vincula_livekit_secret_key_2024_production_secure}
+      # URLs de LiveKit para producción
+      - LIVEKIT_URL=ws://72.60.48.118:7880
       - LIVEKIT_INTERNAL_URL=ws://livekit:7880
+    restart: unless-stopped
 
   call-service:
     build: ./backend/call-service
@@ -93,8 +96,9 @@ services:
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-vincula_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vincula}
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
-      - LIVEKIT_SECRET_KEY=${LIVEKIT_SECRET_KEY:-vincula_livekit_secret_key_2024_development_secure}
+      - LIVEKIT_SECRET_KEY=${LIVEKIT_SECRET_KEY:-vincula_livekit_secret_key_2024_production_secure}
       - LIVEKIT_SERVER_URL=ws://livekit:7880
+    restart: unless-stopped
 
   queue-service:
     build: ./backend/queue-service
@@ -105,18 +109,7 @@ services:
         condition: service_started
     environment:
       - REDIS_URL=redis://redis:6379
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api-gateway
-    environment:
-      # Use relative API path for frontend
-      - REACT_APP_API_URL=
-      - REACT_APP_WS_URL=
-      - REACT_APP_LIVEKIT_URL=ws://localhost:7880
+    restart: unless-stopped
 
 volumes:
   postgres_data:

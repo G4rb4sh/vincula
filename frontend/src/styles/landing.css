@@ -76,6 +76,29 @@
   width: 100%;
 }
 
+/* Header Login Button */
+.btn-login-header {
+  padding: var(--space-2) var(--space-6);
+  font-size: var(--text-sm);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base) ease;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-login-header:hover {
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+  box-shadow: var(--shadow-md);
+}
+
 .user-menu {
   display: flex;
   align-items: center;
@@ -264,8 +287,21 @@
 }
 
 .participant .avatar {
-  font-size: var(--text-6xl);
-  line-height: 1;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: var(--shadow-md);
+}
+
+.participant .avatar svg {
+  width: 40px;
+  height: 40px;
+  color: var(--primary-700);
 }
 
 .participant span {
@@ -343,10 +379,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-5xl);
   background: linear-gradient(135deg, var(--primary-100), var(--secondary-100));
   border-radius: var(--radius-2xl);
   margin-bottom: var(--space-6);
+  overflow: hidden;
+  border: 2px solid var(--primary-200);
+}
+
+.feature-card .feature-icon svg {
+  width: 40px;
+  height: 40px;
+  color: var(--primary-600);
 }
 
 .feature-card h3 {
@@ -635,4 +678,240 @@
   .participant.doctor {
     grid-column: span 1;
   }
+}
+
+/* Recording Section */
+.recording-section {
+  padding: var(--space-24) 0;
+  background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-50) 100%);
+}
+
+.recording-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.recording-text h2 {
+  font-size: var(--text-4xl);
+  color: var(--neutral-900);
+  margin-bottom: var(--space-6);
+  font-weight: var(--font-bold);
+}
+
+.recording-text p {
+  font-size: var(--text-lg);
+  color: var(--neutral-700);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-8);
+}
+
+.recording-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.recording-benefit {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base) ease;
+}
+
+.recording-benefit:hover {
+  transform: translateX(8px);
+  box-shadow: var(--shadow-md);
+}
+
+.recording-benefit .benefit-icon {
+  width: var(--space-12);
+  height: var(--space-12);
+  background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-600);
+  flex-shrink: 0;
+}
+
+.recording-benefit .benefit-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Estilo específico para el ícono de AI - mantener consistencia azul */
+.recording-benefit .ai-icon {
+  background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+}
+
+.recording-benefit .ai-icon svg {
+  color: var(--primary-600);
+}
+
+.recording-benefit h4 {
+  font-size: var(--text-lg);
+  color: var(--neutral-900);
+  margin-bottom: var(--space-2);
+  font-weight: var(--font-semibold);
+}
+
+.recording-benefit p {
+  font-size: var(--text-base);
+  color: var(--neutral-600);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+.recording-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.recording-mockup {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--neutral-200);
+  max-width: 400px;
+  width: 100%;
+}
+
+.video-player {
+  background: var(--neutral-900);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  position: relative;
+}
+
+.video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.play-button {
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  width: var(--space-10);
+  height: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: all var(--transition-base) ease;
+}
+
+.play-button:hover {
+  background: var(--primary-700);
+  transform: scale(1.1);
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress {
+  width: 35%;
+  height: 100%;
+  background: var(--primary-500);
+  border-radius: var(--radius-full);
+}
+
+.video-info {
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+@media (max-width: 1024px) {
+  .recording-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: var(--space-8);
+  }
+  
+  .recording-text h2 {
+    font-size: var(--text-3xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .recording-benefits {
+    gap: var(--space-4);
+  }
+  
+  .recording-benefit {
+    padding: var(--space-3);
+  }
+  
+  .recording-text h2 {
+    font-size: var(--text-2xl);
+  }
+  
+  .recording-text p {
+    font-size: var(--text-base);
+  }
+}
+
+/* Botones del header cuando está autenticado */
+.btn-dashboard {
+  padding: var(--space-2) var(--space-6);
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--transition-base) ease;
+  margin-left: var(--space-3);
+}
+
+.btn-dashboard:hover {
+  background: var(--primary-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-logout {
+  padding: var(--space-2) var(--space-6);
+  background: transparent;
+  color: var(--neutral-600);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--transition-base) ease;
+  margin-left: var(--space-2);
+}
+
+.btn-logout:hover {
+  border-color: var(--primary-600);
+  color: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 } 

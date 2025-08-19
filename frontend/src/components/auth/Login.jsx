@@ -9,12 +9,11 @@ import {
   Typography,
   Alert,
   Stack,
-  Avatar,
+
   Divider,
   CircularProgress,
 } from '@mui/material';
 import {
-  LocalHospital,
   Email,
   Lock,
   Login as LoginIcon,
@@ -74,17 +73,6 @@ export const Login = () => {
         >
           {/* Logo y Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Avatar
-              sx={{
-                m: 'auto',
-                mb: 2,
-                bgcolor: 'primary.main',
-                width: 64,
-                height: 64,
-              }}
-            >
-              <LocalHospital fontSize="large" />
-            </Avatar>
             <Typography variant="h4" component="h1" fontWeight="bold" color="primary" gutterBottom>
               Vincula
             </Typography>
@@ -170,7 +158,7 @@ export const Login = () => {
                 <Link 
                   to="/register" 
                   style={{ 
-                    color: '#2E7D32', 
+                    color: '#1976D2', 
                     textDecoration: 'none',
                     fontWeight: 500,
                   }}

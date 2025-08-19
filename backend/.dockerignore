@@ -1,0 +1,69 @@
+# Archivos y directorios a ignorar en Docker builds del backend
+
+# Go specific
+*.log
+*.out
+*.test
+vendor/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Docker files
+Dockerfile*
+docker-compose*
+
+# Build artifacts
+bin/
+pkg/
+dist/
+
+# Test coverage
+*.cover
+coverage.out
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Air (live reload) files
+.air/
+.air.toml
+
+# Binary files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib

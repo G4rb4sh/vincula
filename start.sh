@@ -36,9 +36,10 @@ export $(cat .env | grep -v '^#' | xargs) 2>/dev/null
 
 # Verificar si Docker está corriendo
 if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker no está corriendo. Por favor, inicia Docker Desktop."
-    echo "💡 Intentando iniciar Docker..."
-    open -a Docker 2>/dev/null || echo "⚠️  No se pudo iniciar Docker automáticamente"
+    echo "❌ Docker no está corriendo. Por favor, inicia Docker."
+    echo "💡 En Ubuntu/WSL puedes intentar:"
+    echo "   sudo systemctl start docker"
+    echo "   O si usas Docker Desktop, inicialo desde el menú de aplicaciones"
     echo "   Espera a que Docker esté listo y ejecuta este script nuevamente."
     exit 1
 fi
@@ -121,10 +122,24 @@ else
 fi
 
 # Asegurar que ningún servidor local ocupe el puerto 3000 (interfiere con el frontend en Docker)
-if lsof -iTCP:3000 -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "⚠️  Detectado un proceso escuchando en el puerto 3000 en el host."
-    echo "   Esto puede interferir con el frontend en Docker. Por favor, cierra ese proceso."
-    lsof -nP -iTCP:3000 -sTCP:LISTEN || true
+if command -v lsof >/dev/null 2>&1; then
+    if lsof -iTCP:3000 -sTCP:LISTEN >/dev/null 2>&1; then
+        echo "⚠️  Detectado un proceso escuchando en el puerto 3000 en el host."
+        echo "   Esto puede interferir con el frontend en Docker. Por favor, cierra ese proceso."
+        lsof -nP -iTCP:3000 -sTCP:LISTEN || true
+    fi
+elif command -v netstat >/dev/null 2>&1; then
+    if netstat -tln | grep -q ":3000 "; then
+        echo "⚠️  Detectado un proceso escuchando en el puerto 3000 en el host."
+        echo "   Esto puede interferir con el frontend en Docker."
+        netstat -tln | grep ":3000 " || true
+    fi
+elif command -v ss >/dev/null 2>&1; then
+    if ss -tln | grep -q ":3000 "; then
+        echo "⚠️  Detectado un proceso escuchando en el puerto 3000 en el host."
+        echo "   Esto puede interferir con el frontend en Docker."
+        ss -tln | grep ":3000 " || true
+    fi
 fi
 
 echo ""

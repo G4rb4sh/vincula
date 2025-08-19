@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '../../stores/authStore';
 
 export const FamilyDashboard = () => {
@@ -43,10 +44,15 @@ export const FamilyDashboard = () => {
 
       <div className="dashboard-content">
         {canObserve && activeCall ? (
-          <div className="observer-access-section">
+          <motion.div 
+            className="observer-access-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="active-call-card">
               <h2>Consulta en Progreso</h2>
-              <p>Su familiar está actualmente en una videollamada médica.</p>
+              <p>Su familiar está actualmente en una videollamada médica que <strong>se está grabando automáticamente</strong> para su posterior revisión.</p>
               <div className="call-details">
                 <p><strong>Iniciada:</strong> {new Date(activeCall.startedAt).toLocaleTimeString()}</p>
                 <p><strong>Estado:</strong> Activa</p>
@@ -57,6 +63,10 @@ export const FamilyDashboard = () => {
               >
                 Observar Consulta
               </button>
+              <div className="recording-notice">
+                <h4>Grabación Automática</h4>
+                <p>Esta consulta se está grabando y estará disponible en su historial inmediatamente después de finalizar.</p>
+              </div>
               <p className="observer-note">
                 <small>
                   Podrá ver y escuchar la consulta sin que los participantes lo sepan.
@@ -64,7 +74,7 @@ export const FamilyDashboard = () => {
                 </small>
               </p>
             </div>
-          </div>
+          </motion.div>
         ) : (
           <div className="no-active-call">
             <div className="status-card">
@@ -74,10 +84,19 @@ export const FamilyDashboard = () => {
           </div>
         )}
 
-        <div className="call-history-section">
-          <h2>Historial de Consultas Observadas</h2>
+        <motion.div 
+          className="call-history-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <h2>Historial de Grabaciones</h2>
+          <p className="history-description">
+            Todas las consultas médicas se graban automáticamente. Aquí puedes acceder 
+            a todas las grabaciones para revisar la información médica cuando lo necesites.
+          </p>
           <ObservedCallsList />
-        </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -118,9 +137,13 @@ const ObservedCallsList = () => {
             </p>
           </div>
           {call.recordingUrl && (
-            <button className="view-recording-btn">
+            <motion.button 
+              className="view-recording-btn"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               Ver Grabación
-            </button>
+            </motion.button>
           )}
         </div>
       ))}

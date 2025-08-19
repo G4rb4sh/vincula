@@ -4,15 +4,15 @@ import { createTheme } from '@mui/material/styles';
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#2E7D32', // Verde médico
-      light: '#4CAF50',
-      dark: '#1B5E20',
+      main: '#1976D2', // Azul como color principal
+      light: '#42A5F5',
+      dark: '#0D47A1',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#1976D2', // Azul médico
-      light: '#42A5F5',
-      dark: '#0D47A1',
+      main: '#2E7D32', // Verde como color secundario
+      light: '#4CAF50',
+      dark: '#1B5E20',
       contrastText: '#ffffff',
     },
     success: {
@@ -49,12 +49,12 @@ export const theme = createTheme({
     h1: {
       fontSize: '2.5rem',
       fontWeight: 600,
-      color: '#2E7D32',
+      color: '#1976D2',
     },
     h2: {
       fontSize: '2rem',
       fontWeight: 500,
-      color: '#2E7D32',
+      color: '#1976D2',
     },
     h3: {
       fontSize: '1.5rem',
@@ -92,9 +92,9 @@ export const theme = createTheme({
           padding: '10px 20px',
         },
         contained: {
-          boxShadow: '0 2px 8px rgba(46, 125, 50, 0.2)',
+          boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)',
           '&:hover': {
-            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+            boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
           },
         },
       },

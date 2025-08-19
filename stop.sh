@@ -26,9 +26,21 @@ echo "📋 Limpiando procesos en puertos..."
 PORTS=(3000 8080 8081 8082 8083 7880 5432 6379)
 
 for port in "${PORTS[@]}"; do
-    if lsof -ti:$port >/dev/null 2>&1; then
-        echo "   🔧 Liberando puerto $port..."
-        lsof -ti:$port | xargs kill -9 2>/dev/null || true
+    if command -v lsof >/dev/null 2>&1; then
+        if lsof -ti:$port >/dev/null 2>&1; then
+            echo "   🔧 Liberando puerto $port..."
+            lsof -ti:$port | xargs kill -9 2>/dev/null || true
+        fi
+    elif command -v fuser >/dev/null 2>&1; then
+        if fuser $port/tcp >/dev/null 2>&1; then
+            echo "   🔧 Liberando puerto $port..."
+            fuser -k $port/tcp >/dev/null 2>&1 || true
+        fi
+    elif command -v netstat >/dev/null 2>&1; then
+        # Solo mostrar advertencia si hay algo en el puerto
+        if netstat -tln 2>/dev/null | grep -q ":$port "; then
+            echo "   ⚠️  Puerto $port puede estar ocupado. Considera reiniciar Docker o el sistema."
+        fi
     fi
 done
 
@@ -55,5 +67,7 @@ echo "   • Limpiar sistema Docker: docker system prune -f"
 echo "   • Limpiar todo Docker: docker system prune -a --volumes -f"
 echo ""
 echo "🔍 Verificar puertos libres:"
-echo "   • lsof -i :3000,8080,8081,8082,8083,7880,5432,6379"
+echo "   • lsof -i :3000,8080,8081,8082,8083,7880,5432,6379  (si tienes lsof)"
+echo "   • netstat -tln | grep -E ':(3000|8080|8081|8082|8083|7880|5432|6379) '"
+echo "   • ss -tln | grep -E ':(3000|8080|8081|8082|8083|7880|5432|6379) '"
 echo "" 

@@ -9,7 +9,7 @@ import {
   Typography,
   Alert,
   Stack,
-  Avatar,
+
   Divider,
   CircularProgress,
   FormControl,
@@ -18,7 +18,6 @@ import {
   MenuItem,
 } from '@mui/material';
 import {
-  LocalHospital,
   PersonAdd,
   Email,
   Lock,
@@ -115,17 +114,6 @@ export const Register = () => {
         >
           {/* Logo y Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Avatar
-              sx={{
-                m: 'auto',
-                mb: 2,
-                bgcolor: 'secondary.main',
-                width: 64,
-                height: 64,
-              }}
-            >
-              <LocalHospital fontSize="large" />
-            </Avatar>
             <Typography variant="h4" component="h1" fontWeight="bold" color="primary" gutterBottom>
               Vincula
             </Typography>
@@ -212,7 +200,7 @@ export const Register = () => {
                   </MenuItem>
                   <MenuItem value="employee">
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <LocalHospital fontSize="small" />
+                      <PersonAdd fontSize="small" />
                       <Typography>Empleado Médico</Typography>
                     </Stack>
                   </MenuItem>
@@ -283,7 +271,7 @@ export const Register = () => {
                 <Link 
                   to="/login" 
                   style={{ 
-                    color: '#2E7D32', 
+                    color: '#1976D2', 
                     textDecoration: 'none',
                     fontWeight: 500,
                   }}

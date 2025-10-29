@@ -11,12 +11,14 @@ COPY go.mod go.sum ./
 # Descargar dependencias
 RUN go mod download
 
-# Copiar código fuente
-COPY main.go ./
-COPY internal/ ./internal/
+# Copiar código fuente completo
+COPY . .
+
+# Verificar que los archivos están presentes (debug)
+RUN ls -la && ls -la internal/
 
 # Compilar la aplicación
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Imagen final
 FROM alpine:latest

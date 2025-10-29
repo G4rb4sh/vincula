@@ -38,9 +38,9 @@ coverage/
 # Go binaries
 backend/*/main
 backend/*/*-service
-user-service
-call-service
-queue-service
+# user-service
+# call-service
+# queue-service
 api-gateway
 *.exe
 

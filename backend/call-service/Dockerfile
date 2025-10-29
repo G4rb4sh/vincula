@@ -14,11 +14,15 @@ RUN go mod download
 # Copiar código fuente completo
 COPY . .
 
-# Verificar que los archivos están presentes (debug)
-RUN ls -la && ls -la internal/
+# Verificar estructura y ejecutar go mod tidy
+RUN echo "=== Directory structure ===" && \
+    find . -type f -name "*.go" && \
+    echo "=== Running go mod tidy ===" && \
+    go mod tidy && \
+    echo "=== Building application ===" 
 
 # Compilar la aplicación
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o main .
 
 # Imagen final
 FROM alpine:latest

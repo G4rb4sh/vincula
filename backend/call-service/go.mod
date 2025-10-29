@@ -7,6 +7,7 @@ toolchain go1.24.4
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/lib/pq v1.10.9
 	github.com/livekit/protocol v1.39.2
 	github.com/livekit/server-sdk-go/v2 v2.9.1
 )

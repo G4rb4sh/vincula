@@ -56,8 +56,17 @@ func (lk *LiveKitManager) CreateCallRoom(callID string, patientID string) (*live
 		return nil, fmt.Errorf("failed to create room: %w", err)
 	}
 
-	// Iniciar grabación automática
-	go lk.startRecording(roomName)
+	// Iniciar grabación automática de forma asíncrona
+	// Esperamos un momento para que la sala esté completamente creada
+	go func() {
+		time.Sleep(2 * time.Second)
+		err := lk.startRecording(roomName)
+		if err != nil {
+			fmt.Printf("Error starting automatic recording for room %s: %v\n", roomName, err)
+		} else {
+			fmt.Printf("Automatic recording started successfully for room %s\n", roomName)
+		}
+	}()
 
 	return room, nil
 }
@@ -103,24 +112,54 @@ func (lk *LiveKitManager) GenerateAccessToken(roomName, participantID string, ro
 func (lk *LiveKitManager) startRecording(roomName string) error {
 	egressClient := lksdk.NewEgressClient(lk.serverURL, lk.apiKey, lk.apiSecret)
 
-	_, err := egressClient.StartRoomCompositeEgress(context.Background(), &livekit.RoomCompositeEgressRequest{
-		RoomName: roomName,
-		Layout:   "grid",
-		Output: &livekit.EncodedFileOutput{
+	// Determinar tipo de almacenamiento basado en configuración
+	useS3 := getEnv("USE_S3_STORAGE", "false") == "true"
+	var output *livekit.EncodedFileOutput
+
+	if useS3 {
+		// Configuración para S3
+		output = &livekit.EncodedFileOutput{
 			FileType: livekit.EncodedFileType_MP4,
 			Filepath: fmt.Sprintf("recordings/%s/%d.mp4", roomName, time.Now().Unix()),
 			S3: &livekit.S3Upload{
 				AccessKey: getEnv("AWS_ACCESS_KEY", ""),
 				Secret:    getEnv("AWS_SECRET_KEY", ""),
-				Region:    "us-west-2",
-				Bucket:    "healthcare-call-recordings",
+				Region:    getEnv("AWS_REGION", "us-west-2"),
+				Bucket:    getEnv("AWS_BUCKET", "healthcare-call-recordings"),
 			},
-		},
+		}
+	} else {
+		// Almacenamiento local
+		recordingsDir := getEnv("RECORDINGS_DIR", "/var/recordings")
+		filePath := fmt.Sprintf("%s/%s/%d.mp4", recordingsDir, roomName, time.Now().Unix())
+		output = &livekit.EncodedFileOutput{
+			FileType: livekit.EncodedFileType_MP4,
+			Filepath: filePath,
+		}
+	}
+
+	egress, err := egressClient.StartRoomCompositeEgress(context.Background(), &livekit.RoomCompositeEgressRequest{
+		RoomName: roomName,
+		Layout:   "grid",
+		Output:   output,
 		Options: &livekit.RoomCompositeOptions{
 			AudioOnly: false,
 			VideoOnly: false,
+			VideoCodec: livekit.VideoCodec_H264_MAIN,
+			AudioCodec: livekit.AudioCodec_AAC,
+			EncodingOptions: &livekit.EncodingOptions{
+				Width:     1280,
+				Height:    720,
+				Framerate: 30,
+				VideoBitrate: 1500,
+				AudioBitrate: 128,
+			},
 		},
 	})
+
+	if err == nil && egress != nil {
+		fmt.Printf("Recording started with egress ID: %s\n", egress.EgressId)
+	}
 
 	return err
 }
@@ -159,6 +198,24 @@ func (lk *LiveKitManager) GetParticipants(roomName string) ([]*livekit.Participa
 	}
 	
 	return participants.Participants, nil
+}
+
+// GetActiveRooms obtiene todas las salas activas
+func (lk *LiveKitManager) GetActiveRooms() ([]*livekit.Room, error) {
+	rooms, err := lk.roomClient.ListRooms(context.Background(), &livekit.ListRoomsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return rooms.Rooms, nil
+}
+
+// StopRecording detiene la grabación de una sala
+func (lk *LiveKitManager) StopRecording(egressID string) error {
+	egressClient := lksdk.NewEgressClient(lk.serverURL, lk.apiKey, lk.apiSecret)
+	_, err := egressClient.StopEgress(context.Background(), &livekit.StopEgressRequest{
+		EgressId: egressID,
+	})
+	return err
 }
 
 // RemoveParticipant remueve un participante de la sala

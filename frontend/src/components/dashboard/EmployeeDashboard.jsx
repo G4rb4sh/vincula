@@ -49,10 +49,13 @@ import {
   ArticleOutlined,
   SummarizeOutlined,
   Support,
+  LiveTv,
+  VideoLibrary,
 } from '@mui/icons-material';
 import { useCallStore } from '../../stores/callStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useQueueUpdates, useNotifications } from '../../hooks/useWebSocket';
+import { LiveCallsList } from '../calls/LiveCallsList';
 
 export const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -295,6 +298,12 @@ export const EmployeeDashboard = () => {
               sx={{ textTransform: 'none', fontWeight: 500 }}
             />
             <Tab 
+              icon={<LiveTv />} 
+              label="Llamadas en Vivo" 
+              iconPosition="start" 
+              sx={{ textTransform: 'none', fontWeight: 500 }}
+            />
+            <Tab 
               icon={<History />} 
               label="Historial & Estadísticas" 
               iconPosition="start" 
@@ -494,8 +503,32 @@ export const EmployeeDashboard = () => {
             </Box>
           )}
 
-          {/* Tab 2: Historial & Estadísticas */}
+          {/* Tab 2: Llamadas en Vivo */}
           {selectedTab === 1 && (
+            <Box>
+              <Paper elevation={2} sx={{ p: 4, borderRadius: 2 }}>
+                <Stack spacing={2} mb={3}>
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <LiveTv color="primary" fontSize="large" />
+                    <Typography variant="h5" color="primary" fontWeight={600}>
+                      Monitor de Llamadas en Vivo
+                    </Typography>
+                  </Stack>
+                  <Alert severity="info" icon={<VideoLibrary />}>
+                    <Typography variant="body2">
+                      Como profesional de salud, puedes supervisar todas las videollamadas activas en el sistema.
+                      Todas las llamadas se graban automáticamente para revisión posterior.
+                    </Typography>
+                  </Alert>
+                </Stack>
+                <Divider sx={{ mb: 3 }} />
+                <LiveCallsList userRole="employee" />
+              </Paper>
+            </Box>
+          )}
+
+          {/* Tab 3: Historial & Estadísticas */}
+          {selectedTab === 2 && (
             <Box>
               <Grid container spacing={4}>
                 {/* Panel Izquierdo - Estadísticas */}

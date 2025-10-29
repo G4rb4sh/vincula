@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
-const WS_URL = process.env.REACT_APP_WS_URL || '';
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
 const RECONNECT_INTERVAL = 5000; // Increased from 3 seconds to 5 seconds
 const MAX_RECONNECT_ATTEMPTS = 3; // Reduced from 5 to 3 attempts
 

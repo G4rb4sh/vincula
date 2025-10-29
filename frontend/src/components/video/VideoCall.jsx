@@ -210,7 +210,7 @@ function VideoCall() {
       });
 
       // Conectar a la sala (usar URL provista por backend si existe)
-      const urlToUse = serverUrl || process.env.REACT_APP_LIVEKIT_URL || 'ws://localhost:7880';
+      const urlToUse = serverUrl || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host.replace(':3000', ':7880')}`;
       // No publicar audio/video durante la conexión para evitar bloqueo por autoplay
       await newRoom.connect(urlToUse, token, {
         autoSubscribe: true,
@@ -279,7 +279,7 @@ function VideoCall() {
     }
     
     // Verificar si estamos en un contexto seguro
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
       console.warn('Media access may require HTTPS');
     }
     

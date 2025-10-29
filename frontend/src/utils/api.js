@@ -1,5 +1,5 @@
-// Use relative API path by default so the app works from any host behind nginx
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+// Use relative API URL to avoid HTTPS/HTTP mixed content issues
+const API_BASE_URL = '/api';
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');

@@ -138,8 +138,7 @@ export const LandingPage = () => {
                     transition={{ duration: 0.6, delay: 0.2 }}
                   >
                     Vincula es la plataforma que permite a familiares y acompañantes estar presentes 
-                    virtualmente durante consultas médicas. <strong>Todas las sesiones se graban automáticamente </strong> 
-                    para que puedas revisar la información médica cuando lo necesites.
+                    virtualmente. <strong>Todas las sesiones se graban automáticamente </strong> 
                   </motion.p>
                   <motion.div 
                     className="hero-buttons"

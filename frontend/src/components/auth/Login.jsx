@@ -33,7 +33,7 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      const result = await login({ email, password });
+      const result = await login({ email: email.trim(), password });
       console.log('Login result:', result);
       
       if (result.success) {

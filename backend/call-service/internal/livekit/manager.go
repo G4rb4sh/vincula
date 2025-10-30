@@ -80,25 +80,28 @@ func (lk *LiveKitManager) GenerateAccessToken(roomName, participantID string, ro
 	}
 
 	// Configurar permisos según rol
+	// Usar funciones helper para crear punteros
+	boolPtr := func(b bool) *bool { return &b }
+	
 	switch role {
 	case RolePatient, RoleEmployee:
-		grant.CanPublish = true
-		grant.CanSubscribe = true
-		grant.CanPublishData = true
+		grant.CanPublish = boolPtr(true)
+		grant.CanSubscribe = boolPtr(true)
+		grant.CanPublishData = boolPtr(true)
 
 	case RoleFamily:
 		// Observadores silenciosos
-		grant.CanPublish = false
-		grant.CanSubscribe = true
-		grant.CanPublishData = false
-		grant.Hidden = true // No aparecen en lista de participantes
+		grant.CanPublish = boolPtr(false)
+		grant.CanSubscribe = boolPtr(true)
+		grant.CanPublishData = boolPtr(false)
+		grant.Hidden = boolPtr(true) // No aparecen en lista de participantes
 
 	case RoleAdmin:
-		grant.CanPublish = true
-		grant.CanSubscribe = true
-		grant.CanPublishData = true
-		grant.RoomAdmin = true
-		grant.RoomRecord = true
+		grant.CanPublish = boolPtr(true)
+		grant.CanSubscribe = boolPtr(true)
+		grant.CanPublishData = boolPtr(true)
+		grant.RoomAdmin = boolPtr(true)
+		grant.RoomRecord = boolPtr(true)
 	}
 
 	at.SetVideoGrant(grant).
@@ -128,26 +131,11 @@ func (lk *LiveKitManager) startRecording(roomName string) error {
 	_ = useS3 // Ignorar por ahora
 
 	// Usar la estructura correcta para RoomCompositeEgressRequest
-	width := int32(1280)
-	height := int32(720)
-	framerate := int32(30)
-	videoBitrate := int32(1500)
-	audioBitrate := int32(128)
-	
+	// Simplificar la solicitud con solo los campos básicos y soportados
 	egress, err := egressClient.StartRoomCompositeEgress(context.Background(), &livekit.RoomCompositeEgressRequest{
 		RoomName: roomName,
 		Layout:   "grid",
 		Output:   &livekit.RoomCompositeEgressRequest_File{File: output},
-		AudioOnly: false,
-		VideoOnly: false,
-		CustomBaseUrl: "",
-		VideoCodec: livekit.VideoCodec_H264_MAIN,
-		AudioCodec: livekit.AudioCodec_AAC,
-		Width:     width,
-		Height:    height,
-		Framerate: framerate,
-		VideoBitrate: videoBitrate,
-		AudioBitrate: audioBitrate,
 	})
 
 	if err == nil && egress != nil {

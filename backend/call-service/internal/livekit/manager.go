@@ -80,7 +80,7 @@ func (lk *LiveKitManager) GenerateAccessToken(roomName, participantID string, ro
 	}
 
 	// Configurar permisos según rol
-	// Usar funciones helper para crear punteros
+	// Usar funciones helper para crear punteros (solo para campos que lo requieren)
 	boolPtr := func(b bool) *bool { return &b }
 	
 	switch role {
@@ -94,14 +94,14 @@ func (lk *LiveKitManager) GenerateAccessToken(roomName, participantID string, ro
 		grant.CanPublish = boolPtr(false)
 		grant.CanSubscribe = boolPtr(true)
 		grant.CanPublishData = boolPtr(false)
-		grant.Hidden = boolPtr(true) // No aparecen en lista de participantes
+		grant.Hidden = true // No aparecen en lista de participantes
 
 	case RoleAdmin:
 		grant.CanPublish = boolPtr(true)
 		grant.CanSubscribe = boolPtr(true)
 		grant.CanPublishData = boolPtr(true)
-		grant.RoomAdmin = boolPtr(true)
-		grant.RoomRecord = boolPtr(true)
+		grant.RoomAdmin = true
+		grant.RoomRecord = true
 	}
 
 	at.SetVideoGrant(grant).

@@ -25,7 +25,7 @@ services:
     command: redis-server --appendonly yes
 
   livekit:
-    image: livekit/livekit-server:latest
+    image: livekit/livekit-server:v1.7.2
     ports:
       - "7880:7880"
       - "7881:7881"

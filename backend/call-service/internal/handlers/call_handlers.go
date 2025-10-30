@@ -313,7 +313,6 @@ func (h *CallHandlers) GetLivestreamToken(c *gin.Context) {
 
 // StartCallRecording inicia la grabación de una llamada manualmente
 func (h *CallHandlers) StartCallRecording(c *gin.Context) {
-	userID := c.GetHeader("X-User-ID")
 	userRole := c.GetHeader("X-User-Role")
 	callID := c.Param("callId")
 

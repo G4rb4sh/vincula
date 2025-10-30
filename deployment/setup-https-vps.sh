@@ -77,8 +77,7 @@ echo ""
 echo -e "${GREEN}[4/7] Creating Nginx configuration...${NC}"
 
 cat > /etc/nginx/sites-available/vincula-api << EOF
-# Vincula API - Nginx Configuration
-# HTTP - Redirect to HTTPS
+# Vincula API - Nginx Configuration (HTTP only initially, certbot will add HTTPS)
 server {
     listen 80;
     listen [::]:80;
@@ -88,33 +87,6 @@ server {
     location /.well-known/acme-challenge/ {
         root /var/www/html;
     }
-    
-    # Redirect all other traffic to HTTPS
-    location / {
-        return 301 https://\$server_name\$request_uri;
-    }
-}
-
-# HTTPS
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name $API_DOMAIN;
-    
-    # SSL certificates will be configured by certbot
-    
-    # SSL Configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     
     # Logging
     access_log /var/log/nginx/vincula-api-access.log;

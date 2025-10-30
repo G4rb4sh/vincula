@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Vincula - Script de Limpieza
-# Este script detiene y limpia todos los servicios
+# Vincula - Script de Limpieza del Backend
+# Este script detiene y limpia todos los servicios del backend en el VPS
 
 echo "==================================="
-echo "   Vincula - Limpieza"
+echo "   Vincula - Limpieza Backend"
 echo "==================================="
 
 # Preguntar qué tipo de limpieza

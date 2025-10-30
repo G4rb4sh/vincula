@@ -1,30 +1,13 @@
 #!/bin/bash
 
-# Vincula - Script de Configuración
-# Este script prepara el entorno para ejecutar la aplicación
-# 
-# NOTA: Este script está DEPRECATED. Para nuevas instalaciones:
-# - Backend (VPS): usa setup-backend.sh
-# - Frontend (local): usa build-frontend.sh
-# 
-# Este script seguirá funcionando para el backend, pero se recomienda
-# migrar a los nuevos scripts separados.
+# Vincula - Script de Configuración del Backend
+# Este script prepara el entorno backend en el VPS
 
 set -e
 
 echo "==================================="
-echo "   Vincula - Setup"
+echo "   Vincula - Setup Backend"
 echo "==================================="
-echo ""
-echo "AVISO: Este script está deprecated."
-echo "Se recomienda usar 'setup-backend.sh' para el backend."
-echo ""
-read -p "Continuar de todas formas? (s/n): " confirm
-if [ "$confirm" != "s" ] && [ "$confirm" != "S" ]; then
-    echo "Operación cancelada."
-    exit 0
-fi
-echo ""
 
 # Verificar que estamos en Ubuntu/Linux
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
@@ -112,10 +95,10 @@ fi
 
 echo ""
 echo "==================================="
-echo "   Setup completado"
+echo "   Setup Backend Completado"
 echo "==================================="
 echo ""
-echo "Siguiente paso: ejecuta './start.sh' para iniciar la aplicación"
+echo "Siguiente paso: ejecuta './start-backend.sh' para iniciar los servicios del backend"
 echo ""
 
 

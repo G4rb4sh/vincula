@@ -3,30 +3,37 @@
 ## Resumen
 Esta es una aplicación de videollamadas con grabación automática para atención médica. El frontend estará en https://grupovincula.com/ (Hostinger) y el backend en el VPS 72.60.48.118.
 
-## Pasos para desplegar en Ubuntu
+## Arquitectura de Despliegue
 
-### 1. Clonar el repositorio
+- **Frontend**: Hostinger (grupovincula.com) - Archivos estáticos
+- **Backend**: VPS Ubuntu (72.60.48.118) - Servicios Docker
+
+---
+
+## PARTE 1: Desplegar Backend en VPS (Ubuntu)
+
+### 1. Clonar el repositorio en el VPS
 ```bash
 git clone <tu-repositorio>
 cd vincula
 ```
 
-### 2. Ejecutar setup (solo la primera vez)
+### 2. Ejecutar setup del backend (solo la primera vez)
 ```bash
-chmod +x setup.sh start.sh cleanup.sh
-./setup.sh
+chmod +x setup-backend.sh start-backend.sh cleanup.sh
+./setup-backend.sh
 ```
 
 Esto instalará Docker, creará el archivo `.env` con configuración de producción y configurará el firewall.
 
-### 3. Iniciar la aplicación
+### 3. Iniciar los servicios del backend
 ```bash
-./start.sh
+./start-backend.sh
 ```
 
-La aplicación se construirá y se iniciará automáticamente.
+Los servicios del backend se construirán y se iniciarán automáticamente.
 
-### 4. Verificar que todo funcione
+### 4. Verificar que los servicios funcionen
 ```bash
 # Ver logs
 docker-compose -f docker-compose.yaml -f docker-compose.prod.yml logs -f
@@ -35,20 +42,44 @@ docker-compose -f docker-compose.yaml -f docker-compose.prod.yml logs -f
 docker-compose -f docker-compose.yaml -f docker-compose.prod.yml ps
 ```
 
-## Frontend en Hostinger
+---
 
-1. Construir el frontend localmente:
+## PARTE 2: Desplegar Frontend en Hostinger
+
+### 1. Construir el frontend (en tu máquina local o donde tengas Node.js)
 ```bash
-cd frontend
-npm install
-npm run build
+chmod +x build-frontend.sh
+./build-frontend.sh
 ```
 
-2. Subir el contenido de `frontend/build/` a `public_html` en Hostinger
+Esto creará los archivos optimizados para producción en `frontend/build/`.
 
-3. Subir el archivo `frontend/.htaccess` al mismo directorio
+### 2. Crear un ZIP para subir fácilmente (opcional)
+```bash
+cd frontend/build
+zip -r ../../vincula-frontend.zip .
+cd ../..
+```
 
-El `.htaccess` ya está configurado para hacer proxy de las peticiones API al VPS.
+### 3. Subir archivos a Hostinger
+
+Opción A - Usando el File Manager de Hostinger:
+1. Accede al panel de Hostinger
+2. Ve a File Manager
+3. Navega a `public_html`
+4. Sube el contenido de `frontend/build/` (no la carpeta, sino su contenido)
+5. Asegúrate de subir también el archivo `.htaccess`
+
+Opción B - Usando FTP:
+1. Conecta vía FTP a tu cuenta de Hostinger
+2. Sube el contenido de `frontend/build/` a `public_html`
+3. Verifica que `.htaccess` esté presente
+
+### 4. Verificar configuración
+
+El archivo `.htaccess` ya está configurado para:
+- Routing de React (SPA)
+- Proxy de peticiones API al VPS backend
 
 ## Puertos necesarios
 
@@ -98,8 +129,20 @@ docker-compose -f docker-compose.yaml -f docker-compose.prod.yml restart call-se
 ./cleanup.sh
 
 # Iniciar de nuevo
-./start.sh
+./start-backend.sh
 ```
+
+## Scripts Disponibles
+
+### Frontend (local o donde tengas Node.js)
+- `build-frontend.sh` - Construir archivos para Hostinger
+
+### Backend (en el VPS)
+- `setup-backend.sh` - Configuración inicial del VPS (solo primera vez)
+- `start-backend.sh` - Iniciar servicios del backend
+- `cleanup.sh` - Detener/limpiar servicios del backend
+
+---
 
 ## Solución de problemas
 

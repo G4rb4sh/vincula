@@ -80,28 +80,25 @@ func (lk *LiveKitManager) GenerateAccessToken(roomName, participantID string, ro
 	}
 
 	// Configurar permisos según rol
-	trueVal := true
-	falseVal := false
-	
 	switch role {
 	case RolePatient, RoleEmployee:
-		grant.CanPublish = &trueVal
-		grant.CanSubscribe = &trueVal
-		grant.CanPublishData = &trueVal
+		grant.CanPublish = true
+		grant.CanSubscribe = true
+		grant.CanPublishData = true
 
 	case RoleFamily:
 		// Observadores silenciosos
-		grant.CanPublish = &falseVal
-		grant.CanSubscribe = &trueVal
-		grant.CanPublishData = &falseVal
-		grant.Hidden = &trueVal // No aparecen en lista de participantes
+		grant.CanPublish = false
+		grant.CanSubscribe = true
+		grant.CanPublishData = false
+		grant.Hidden = true // No aparecen en lista de participantes
 
 	case RoleAdmin:
-		grant.CanPublish = &trueVal
-		grant.CanSubscribe = &trueVal
-		grant.CanPublishData = &trueVal
-		grant.RoomAdmin = &trueVal
-		grant.RoomRecord = &trueVal
+		grant.CanPublish = true
+		grant.CanSubscribe = true
+		grant.CanPublishData = true
+		grant.RoomAdmin = true
+		grant.RoomRecord = true
 	}
 
 	at.SetVideoGrant(grant).
@@ -130,23 +127,27 @@ func (lk *LiveKitManager) startRecording(roomName string) error {
 	// Nota: Para S3, se necesita configurar el output con la estructura correcta según la API de LiveKit
 	_ = useS3 // Ignorar por ahora
 
+	// Usar la estructura correcta para RoomCompositeEgressRequest
+	width := int32(1280)
+	height := int32(720)
+	framerate := int32(30)
+	videoBitrate := int32(1500)
+	audioBitrate := int32(128)
+	
 	egress, err := egressClient.StartRoomCompositeEgress(context.Background(), &livekit.RoomCompositeEgressRequest{
 		RoomName: roomName,
 		Layout:   "grid",
-		Output:   output,
-		Options: &livekit.RoomCompositeOptions{
-			AudioOnly: false,
-			VideoOnly: false,
-			VideoCodec: livekit.VideoCodec_H264_MAIN,
-			AudioCodec: livekit.AudioCodec_AAC,
-			EncodingOptions: &livekit.EncodingOptions{
-				Width:     1280,
-				Height:    720,
-				Framerate: 30,
-				VideoBitrate: 1500,
-				AudioBitrate: 128,
-			},
-		},
+		Output:   &livekit.RoomCompositeEgressRequest_File{File: output},
+		AudioOnly: false,
+		VideoOnly: false,
+		CustomBaseUrl: "",
+		VideoCodec: livekit.VideoCodec_H264_MAIN,
+		AudioCodec: livekit.AudioCodec_AAC,
+		Width:     width,
+		Height:    height,
+		Framerate: framerate,
+		VideoBitrate: videoBitrate,
+		AudioBitrate: audioBitrate,
 	})
 
 	if err == nil && egress != nil {

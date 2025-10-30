@@ -116,29 +116,29 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     
-    # CORS headers
-    add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
-    add_header 'Access-Control-Allow-Credentials' 'true' always;
-    
-    # Handle preflight requests
-    if (\$request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain; charset=utf-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
-    
     # Logging
     access_log /var/log/nginx/vincula-api-access.log;
     error_log /var/log/nginx/vincula-api-error.log;
     
     # Health check
     location /health {
+        # CORS headers
+        add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        
+        # Handle preflight
+        if (\$request_method = OPTIONS) {
+            add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Length' 0;
+            add_header 'Content-Type' 'text/plain';
+            return 204;
+        }
+        
         proxy_pass http://localhost:8080/health;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
@@ -149,6 +149,10 @@ server {
     
     # WebSocket support
     location /ws {
+        # CORS headers
+        add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        
         proxy_pass http://localhost:8080/ws;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -164,6 +168,23 @@ server {
     
     # API routes
     location / {
+        # CORS headers
+        add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        
+        # Handle preflight
+        if (\$request_method = OPTIONS) {
+            add_header 'Access-Control-Allow-Origin' '$FRONTEND_DOMAIN' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Length' 0;
+            add_header 'Content-Type' 'text/plain';
+            return 204;
+        }
+        
         proxy_pass http://localhost:8080;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;

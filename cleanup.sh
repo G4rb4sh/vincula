@@ -20,13 +20,13 @@ case $option in
     1)
         echo ""
         echo "Deteniendo servicios..."
-        docker-compose -f docker-compose.yaml -f docker-compose.prod.yml stop
+        docker-compose -f docker-compose.prod.yml stop
         echo "Servicios detenidos. Los datos se mantienen intactos."
         ;;
     2)
         echo ""
         echo "Deteniendo y eliminando contenedores..."
-        docker-compose -f docker-compose.yaml -f docker-compose.prod.yml down
+        docker-compose -f docker-compose.prod.yml down
         echo "Contenedores eliminados. Los volúmenes de datos se mantienen."
         ;;
     3)
@@ -37,7 +37,7 @@ case $option in
             echo "Realizando limpieza completa..."
             
             # Detener y eliminar contenedores y volúmenes
-            docker-compose -f docker-compose.yaml -f docker-compose.prod.yml down -v
+            docker-compose -f docker-compose.prod.yml down -v
             
             # Eliminar grabaciones locales
             if [ -d "/var/recordings" ]; then

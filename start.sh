@@ -38,17 +38,17 @@ source .env
 
 # Detener contenedores existentes si los hay
 echo "Deteniendo contenedores existentes (si los hay)..."
-docker-compose -f docker-compose.yaml -f docker-compose.prod.yml down 2>/dev/null || true
+docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
 
 # Construir las imágenes
 echo ""
 echo "Construyendo imágenes Docker..."
-docker-compose -f docker-compose.yaml -f docker-compose.prod.yml build
+docker-compose -f docker-compose.prod.yml build
 
 # Iniciar servicios
 echo ""
 echo "Iniciando servicios..."
-docker-compose -f docker-compose.yaml -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 
 # Esperar a que los servicios estén listos
 echo ""
@@ -60,7 +60,7 @@ echo ""
 echo "==================================="
 echo "   Estado de los Servicios"
 echo "==================================="
-docker-compose -f docker-compose.yaml -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml ps
 
 echo ""
 echo "==================================="
@@ -76,7 +76,7 @@ echo "  - LiveKit:        ws://localhost:7880"
 echo "  - PostgreSQL:     localhost:5432"
 echo "  - Redis:          localhost:6379"
 echo ""
-echo "Para ver los logs: docker-compose -f docker-compose.yaml -f docker-compose.prod.yml logs -f"
+echo "Para ver los logs: docker-compose -f docker-compose.prod.yml logs -f"
 echo "Para detener: ./cleanup.sh"
 echo ""
 

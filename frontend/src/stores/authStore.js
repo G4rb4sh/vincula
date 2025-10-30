@@ -17,7 +17,8 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
         
         try {
-          const response = await fetch('/api/auth/login', {
+          const apiUrl = process.env.REACT_APP_API_URL || '/api';
+          const response = await fetch(`${apiUrl}/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -60,7 +61,8 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
         
         try {
-          const response = await fetch('/api/auth/register', {
+          const apiUrl = process.env.REACT_APP_API_URL || '/api';
+          const response = await fetch(`${apiUrl}/auth/register`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -125,7 +127,8 @@ const useAuthStore = create(
         }
 
         try {
-          const response = await fetch('/api/auth/me', {
+          const apiUrl = process.env.REACT_APP_API_URL || '/api';
+          const response = await fetch(`${apiUrl}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -158,7 +161,8 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
 
         try {
-          const response = await fetch('/api/auth/profile', {
+          const apiUrl = process.env.REACT_APP_API_URL || '/api';
+          const response = await fetch(`${apiUrl}/auth/profile`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -197,7 +201,8 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
 
         try {
-          const response = await fetch('/api/auth/change-password', {
+          const apiUrl = process.env.REACT_APP_API_URL || '/api';
+          const response = await fetch(`${apiUrl}/auth/change-password`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -288,7 +293,8 @@ const useAuthStore = create(
         }
 
         try {
-          const response = await fetch('/api/auth/refresh', {
+          const apiUrl = process.env.REACT_APP_API_URL || '/api';
+          const response = await fetch(`${apiUrl}/auth/refresh`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

@@ -30,10 +30,29 @@ echo ""
 echo "Instalando dependencias de Node.js..."
 npm install
 
+# Configurar variables de entorno para producción
+echo ""
+echo "Configurando variables de entorno para producción..."
+export REACT_APP_API_URL=http://72.60.48.118:8080
+export REACT_APP_WS_URL=ws://72.60.48.118:8080
+export REACT_APP_LIVEKIT_URL=ws://72.60.48.118:7880
+export GENERATE_SOURCEMAP=false
+export CI=false
+
 # Construir el frontend
 echo ""
 echo "Construyendo frontend para producción..."
 npm run build
+
+# Copiar .htaccess al build
+echo ""
+echo "Copiando .htaccess al build..."
+if [ -f ".htaccess" ]; then
+    cp .htaccess build/
+    echo ".htaccess copiado correctamente"
+else
+    echo "Advertencia: No se encontró .htaccess en el directorio frontend"
+fi
 
 echo ""
 echo "==================================="

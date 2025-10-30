@@ -1,5 +1,5 @@
-// Use relative API URL to avoid HTTPS/HTTP mixed content issues
-const API_BASE_URL = '/api';
+// Use environment variable for API URL, fallback to relative path for development
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');

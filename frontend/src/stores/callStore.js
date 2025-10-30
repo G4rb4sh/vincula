@@ -61,7 +61,8 @@ const useCallStore = create((set, get) => ({
   // Unirse a la cola (para pacientes)
   joinQueue: async (queueData) => {
     try {
-      const response = await fetch('/api/queue/join', {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/queue/join`, {
         method: 'POST',
         headers: {
           ...useAuthStore.getState().getAuthHeaders(),
@@ -101,7 +102,8 @@ const useCallStore = create((set, get) => ({
     }
 
     try {
-      const response = await fetch(`/api/queue/${patientQueueStatus.queueId}/leave`, {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/queue/${patientQueueStatus.queueId}/leave`, {
         method: 'DELETE',
         headers: useAuthStore.getState().getAuthHeaders(),
       });
@@ -175,7 +177,8 @@ const useCallStore = create((set, get) => ({
   // Iniciar llamada
   startCall: async (callData) => {
     try {
-      const response = await fetch('/api/calls/start', {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/calls/start`, {
         method: 'POST',
         headers: {
           ...useAuthStore.getState().getAuthHeaders(),
@@ -201,7 +204,8 @@ const useCallStore = create((set, get) => ({
   // Terminar llamada
   endCall: async (callId) => {
     try {
-      const response = await fetch(`/api/calls/${callId}/end`, {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/calls/${callId}/end`, {
         method: 'POST',
         headers: useAuthStore.getState().getAuthHeaders(),
       });
@@ -226,7 +230,8 @@ const useCallStore = create((set, get) => ({
   // Obtener detalles de una llamada
   getCallDetails: async (callId) => {
     try {
-      const response = await fetch(`/api/calls/${callId}`, {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/calls/${callId}`, {
         headers: useAuthStore.getState().getAuthHeaders(),
       });
 
@@ -252,7 +257,8 @@ const useCallStore = create((set, get) => ({
     }
 
     try {
-      const response = await fetch('/api/family/observer-access', {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/family/observer-access`, {
         headers: useAuthStore.getState().getAuthHeaders(),
       });
 
@@ -293,7 +299,8 @@ const useCallStore = create((set, get) => ({
     set({ historyLoading: true });
     
     try {
-      const response = await fetch('/api/calls/history', {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/calls/history`, {
         headers: useAuthStore.getState().getAuthHeaders(),
       });
 
@@ -317,7 +324,8 @@ const useCallStore = create((set, get) => ({
   // Obtener token para Livekit
   getCallToken: async (callId, options = {}) => {
     try {
-      const response = await fetch('/api/calls/token', {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/calls/token`, {
         method: 'POST',
         headers: {
           ...useAuthStore.getState().getAuthHeaders(),

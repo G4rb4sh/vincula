@@ -129,7 +129,8 @@ const RecordingsList = () => {
 
   const fetchRecordings = async () => {
     try {
-      const response = await fetch('/api/v1/calls/recordings', {
+      const apiUrl = process.env.REACT_APP_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/v1/calls/recordings`, {
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().token}`,
           'X-User-ID': user.id,
